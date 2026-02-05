@@ -759,6 +759,70 @@
             return 'II';
         }
 
+        // Block Entropy Functions (Tasks 25-28)
+
+        // Task 25: Block frequency counter — count occurrences of all length-L binary patterns
+        function countBlockFrequencies(row, L) {
+            const counts = new Map();
+            const n = row.length;
+            for (let i = 0; i < n; i++) {
+                let pattern = 0;
+                for (let j = 0; j < L; j++) {
+                    pattern = (pattern << 1) | row[(i + j) % n];
+                }
+                counts.set(pattern, (counts.get(pattern) || 0) + 1);
+            }
+            return counts;
+        }
+
+        // Task 26: H(L) — Shannon entropy of block frequencies, averaged across all rows
+        function computeBlockEntropyForRow(row, L) {
+            const counts = countBlockFrequencies(row, L);
+            const total = row.length; // Sliding window with wrap = n blocks
+            let H = 0;
+            for (const count of counts.values()) {
+                const p = count / total;
+                if (p > 0) H -= p * Math.log2(p);
+            }
+            return H;
+        }
+
+        function computeBlockEntropyArray(grid) {
+            // Compute H(L) for L=1..8, averaged over all rows
+            const HL = new Array(8);
+            for (let L = 1; L <= 8; L++) {
+                let sumH = 0;
+                for (const row of grid) {
+                    sumH += computeBlockEntropyForRow(row, L);
+                }
+                HL[L - 1] = sumH / grid.length;
+            }
+            return HL;
+        }
+
+        // Task 27: Entropy rate h — average of H(L) - H(L-1) for L=6,7,8
+        function computeEntropyRate(HL) {
+            // Use converged region: average of differences for L=6,7,8
+            const diffs = [];
+            for (let i = 5; i <= 7; i++) { // indices 5,6,7 → L=6,7,8
+                diffs.push(HL[i] - HL[i - 1]);
+            }
+            const h = diffs.reduce((a, b) => a + b, 0) / diffs.length;
+            return Math.max(0, h); // Clamp to non-negative
+        }
+
+        // Task 28: Excess entropy E — y-intercept of linear extrapolation from converged region
+        function computeExcessEntropy(HL, h) {
+            // E = average of (H(L) - h*L) for L=6,7,8
+            let sum = 0;
+            let count = 0;
+            for (let L = 6; L <= 8; L++) {
+                sum += HL[L - 1] - h * L;
+                count++;
+            }
+            return Math.max(0, sum / count); // Clamp to non-negative
+        }
+
         function computeAllMetrics(ruleNumber, grid, initialConfig) {
             const entropy = computeEntropy(grid);
             const density = computeDensity(grid);
@@ -769,7 +833,12 @@
             const period = detectPeriod(grid);
             const wolframClass = classifyWolfram(grid, entropy, density, symmetry);
 
-            return { entropy, density, meanField, symmetry, lyapunov, compressibility, period, wolframClass };
+            // Block entropy (Tasks 25-28)
+            const blockEntropy = computeBlockEntropyArray(grid);
+            const entropyRate = computeEntropyRate(blockEntropy);
+            const excessEntropy = computeExcessEntropy(blockEntropy, entropyRate);
+
+            return { entropy, density, meanField, symmetry, lyapunov, compressibility, period, wolframClass, blockEntropy, entropyRate, excessEntropy };
         }
 
         // Charting Engine - Scatter Plot

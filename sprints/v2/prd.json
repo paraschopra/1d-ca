@@ -306,7 +306,7 @@
       "Total count of all patterns equals the row length (sliding window with wrap)",
       "Works correctly for L=8 (256 possible patterns) on a 128-cell row"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Block Entropy & Excess Entropy",
@@ -319,7 +319,7 @@
       "H(L) is monotonically non-decreasing (H(L+1) >= H(L))",
       "For a grid of all zeros, H(L) = 0 for all L"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Block Entropy & Excess Entropy",
@@ -332,7 +332,7 @@
       "h is always non-negative",
       "Value is returned as a single float"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Block Entropy & Excess Entropy",
@@ -345,7 +345,7 @@
       "E is always non-negative (or clamp to 0 if numerical noise makes it slightly negative)",
       "Value is returned as a single float"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Block Entropy & Excess Entropy",
@@ -357,7 +357,7 @@
       "The precomputed metrics array for the Rule Space Map includes the new fields",
       "No performance regression — adding block entropy computation does not noticeably slow card rendering"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Block Entropy & Excess Entropy",

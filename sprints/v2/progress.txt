@@ -425,3 +425,37 @@ Tests: 8/8 passing (tests/phase-progress-bar.js)
 Phase Transition Explorer category COMPLETE (Tasks 19-24).
 
 Next: Block Entropy & Excess Entropy (Tasks 25-31)
+
+## 2026-02-05 - Block Entropy Core Functions (Tasks 25-29) - COMPLETE
+
+Implemented block entropy computation pipeline:
+
+1. Task 25 - countBlockFrequencies(row, L):
+   - Sliding window with periodic wrap-around
+   - Encodes L-length binary patterns as integers (bit shifting)
+   - Returns Map of pattern → count, total always equals row length
+
+2. Task 26 - computeBlockEntropyArray(grid):
+   - H(L) for L=1..8, Shannon entropy from block frequencies
+   - Averaged over all rows (spatial blocks, per ECA literature)
+   - H(1) ≈ computeEntropy (within 0.09 for Rule 30)
+   - Monotonically non-decreasing, H(L)=0 for all-zeros grid
+
+3. Task 27 - computeEntropyRate(HL):
+   - Average of H(L)-H(L-1) for L=6,7,8 (converged region)
+   - Clamped non-negative
+   - Note: finite-size bias with 128 cells means h < 1.0 even for random grids
+
+4. Task 28 - computeExcessEntropy(HL, h):
+   - Y-intercept of linear extrapolation: average of H(L)-h*L for L=6,7,8
+   - Clamped non-negative
+   - Rule 110 (complex) > Rule 0 (trivial) as expected
+
+5. Task 29 - Integration with computeAllMetrics:
+   - Returns blockEntropy (8-element array), entropyRate, excessEntropy
+   - All existing metrics unchanged
+   - Precomputed metrics array includes new fields
+
+Tests: 15/15 passing (tests/block-entropy.js)
+
+Next: Task 30 - Display entropy rate & excess entropy on cards and modal
