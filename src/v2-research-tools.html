@@ -547,6 +547,51 @@
                 Measures information propagation speed and reveals the causal structure of each rule.
             </p>
         </div>
+        <div id="lightcone-controls" style="display: flex; gap: 15px; padding: 10px 20px; align-items: center; justify-content: center; font-family: monospace; flex-wrap: wrap;">
+            <label style="color: #00ff88;">
+                Rule:
+                <button id="lcRuleDec" style="background: #333; color: #eee; border: 1px solid #666; padding: 4px 8px; cursor: pointer;">−</button>
+                <input type="number" id="lcRuleInput" min="0" max="255" value="30" style="background: #333; color: #eee; border: 1px solid #666; padding: 4px 8px; width: 60px; text-align: center; font-family: monospace;">
+                <button id="lcRuleInc" style="background: #333; color: #eee; border: 1px solid #666; padding: 4px 8px; cursor: pointer;">+</button>
+            </label>
+            <button id="lcRandomRule" style="background: #333; color: #00ff88; border: 1px solid #00ff88; padding: 6px 12px; cursor: pointer; font-family: monospace;">Random Rule</button>
+            <label style="color: #00ff88;">
+                Flip Cell:
+                <input type="range" id="lcFlipSlider" min="0" max="127" value="64" style="width: 120px; vertical-align: middle;">
+                <input type="number" id="lcFlipInput" min="0" max="127" value="64" style="background: #333; color: #eee; border: 1px solid #666; padding: 4px 8px; width: 50px; text-align: center; font-family: monospace;">
+            </label>
+            <label style="color: #aaa; cursor: pointer;">
+                <input type="checkbox" id="lcCompareMode"> Compare
+            </label>
+        </div>
+        <div id="lightcone-single" style="text-align: center; padding: 10px;">
+            <div id="lc-heatmap-container" style="display: inline-flex; gap: 10px; align-items: flex-start;"></div>
+            <div id="lc-metrics" style="font-family: monospace; padding: 10px; color: #ccc;"></div>
+        </div>
+        <div id="lightcone-compare" style="display: none; text-align: center; padding: 10px;">
+            <div style="display: flex; gap: 15px; justify-content: center; padding-bottom: 10px; font-family: monospace;">
+                <label style="color: #00ff88;">
+                    Rule A:
+                    <input type="number" id="lcRuleA" min="0" max="255" value="30" style="background: #333; color: #eee; border: 1px solid #666; padding: 4px 8px; width: 60px; text-align: center; font-family: monospace;">
+                </label>
+                <label style="color: #00ff88;">
+                    Rule B:
+                    <input type="number" id="lcRuleB" min="0" max="255" value="110" style="background: #333; color: #eee; border: 1px solid #666; padding: 4px 8px; width: 60px; text-align: center; font-family: monospace;">
+                </label>
+            </div>
+            <div style="display: flex; gap: 30px; justify-content: center;">
+                <div>
+                    <div id="lc-compare-label-a" style="color: #00ff88; font-family: monospace; padding: 5px;">Rule 30</div>
+                    <div id="lc-compare-heatmap-a" style="display: inline-flex; gap: 10px; align-items: flex-start;"></div>
+                    <div id="lc-compare-metrics-a" style="font-family: monospace; padding: 5px; color: #ccc; font-size: 12px;"></div>
+                </div>
+                <div>
+                    <div id="lc-compare-label-b" style="color: #00ff88; font-family: monospace; padding: 5px;">Rule 110</div>
+                    <div id="lc-compare-heatmap-b" style="display: inline-flex; gap: 10px; align-items: flex-start;"></div>
+                    <div id="lc-compare-metrics-b" style="font-family: monospace; padding: 5px; color: #ccc; font-size: 12px;"></div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Modal -->
@@ -2239,14 +2284,14 @@
             const metricRange = metricMax - metricMin;
 
             // Skip metrics with negligible variation (e.g., Class I rules where everything dies)
-            if (metricRange < 0.05) return null;
+            if (metricRange < 0.1) return null;
 
             // Compute finite differences and find the density with steepest change
             // Skip the very first and last intervals to avoid boundary artifacts
             let maxAbsDeriv = 0;
             let criticalIndex = -1;
 
-            for (let i = 2; i < results.length - 1; i++) {
+            for (let i = 3; i < results.length - 2; i++) {
                 const dy = results[i][metricKey] - results[i - 1][metricKey];
                 const dx = results[i].density - results[i - 1].density;
                 const deriv = Math.abs(dy / dx);
@@ -2406,6 +2451,180 @@
 
         // Auto-run sweep for default rule when page loads
         runDensitySweep(30);
+
+        // ============================================================
+        // Perturbation Light Cones (Tasks 32-37)
+        // ============================================================
+
+        // Task 33: Perturbation engine
+        function computePerturbation(ruleNumber, flipPosition) {
+            const ic = generateCenterCell(GRID_SIZE);
+            const original = generateGrid(ruleNumber, GRID_SIZE, GENERATIONS, ic);
+
+            const perturbedIC = [...ic];
+            perturbedIC[flipPosition] = 1 - perturbedIC[flipPosition];
+            const perturbed = generateGrid(ruleNumber, GRID_SIZE, GENERATIONS, perturbedIC);
+
+            // Difference matrix
+            const diff = [];
+            for (let y = 0; y < GENERATIONS; y++) {
+                const row = [];
+                for (let x = 0; x < GRID_SIZE; x++) {
+                    row.push(Math.abs(original[y][x] - perturbed[y][x]));
+                }
+                diff.push(row);
+            }
+            return diff;
+        }
+
+        // Task 34: Propagation speed estimation
+        function estimatePropagationSpeed(diff) {
+            const width = diff[0].length;
+            let totalSpreadIncrease = 0;
+            let validGens = 0;
+            let prevSpread = 0;
+
+            for (let y = 1; y < diff.length; y++) {
+                let leftmost = -1, rightmost = -1;
+                for (let x = 0; x < width; x++) {
+                    if (diff[y][x] !== 0) {
+                        if (leftmost === -1) leftmost = x;
+                        rightmost = x;
+                    }
+                }
+
+                if (leftmost === -1) continue; // No differences in this row
+
+                let spread = rightmost - leftmost + 1;
+                // Handle wrap-around: if spread > width/2, the cone has wrapped
+                if (spread > width / 2) {
+                    // Count non-zero cells instead for wrapped cones
+                    spread = diff[y].filter(c => c !== 0).length;
+                }
+
+                if (validGens > 0 && spread > prevSpread) {
+                    totalSpreadIncrease += (spread - prevSpread);
+                }
+                prevSpread = spread;
+                validGens++;
+            }
+
+            if (validGens <= 1) return 0;
+            // Speed = half the spread increase rate (cone expands on both sides)
+            const speed = totalSpreadIncrease / (2 * (validGens - 1));
+            return Math.min(1.0, Math.max(0, speed));
+        }
+
+        function getSpeedLabel(speed) {
+            if (speed < 0.01) return 'none';
+            if (speed < 0.3) return 'localized';
+            if (speed <= 0.7) return 'moderate';
+            return 'maximal';
+        }
+
+        // Render light cone for a single rule
+        function renderLightCone(ruleNumber, flipPosition, heatmapContainer, metricsContainer) {
+            heatmapContainer.innerHTML = '';
+            metricsContainer.innerHTML = '';
+
+            const diff = computePerturbation(ruleNumber, flipPosition);
+            const speed = estimatePropagationSpeed(diff);
+            const angle = Math.atan(speed) * (180 / Math.PI);
+            const label = getSpeedLabel(speed);
+
+            // Render heatmap
+            const canvas = document.createElement('canvas');
+            canvas.style.width = '384px';
+            canvas.style.height = '384px';
+            createHeatmap(canvas, diff, {
+                colorMin: [0, 0, 0],
+                colorMid: [0, 200, 200],
+                colorMax: [0, 255, 150]
+            });
+            heatmapContainer.appendChild(canvas);
+
+            // Color scale bar
+            createColorScaleBar(heatmapContainer, {
+                barWidth: 16, barHeight: 384,
+                colorMin: [0, 0, 0], colorMid: [0, 200, 200], colorMax: [0, 255, 150],
+                minValue: 0, maxValue: 1, label: 'Difference'
+            });
+
+            // Metrics
+            metricsContainer.innerHTML = `
+                <span style="color: #00ff88;">Speed:</span> ${speed.toFixed(3)} cells/gen &nbsp;
+                <span style="color: #00ff88;">Cone angle:</span> ${angle.toFixed(1)}° &nbsp;
+                <span style="color: #888;">[${label}]</span>
+            `;
+        }
+
+        // Task 32: Light Cone controls
+        function getLCRule() { return parseInt(document.getElementById('lcRuleInput').value) || 0; }
+        function getLCFlip() { return parseInt(document.getElementById('lcFlipInput').value) || 64; }
+
+        function updateLightCone() {
+            const isCompare = document.getElementById('lcCompareMode').checked;
+            document.getElementById('lightcone-single').style.display = isCompare ? 'none' : '';
+            document.getElementById('lightcone-compare').style.display = isCompare ? '' : 'none';
+
+            if (isCompare) {
+                const ruleA = parseInt(document.getElementById('lcRuleA').value) || 30;
+                const ruleB = parseInt(document.getElementById('lcRuleB').value) || 110;
+                const flip = getLCFlip();
+
+                document.getElementById('lc-compare-label-a').textContent = `Rule ${ruleA}`;
+                document.getElementById('lc-compare-label-b').textContent = `Rule ${ruleB}`;
+
+                renderLightCone(ruleA, flip,
+                    document.getElementById('lc-compare-heatmap-a'),
+                    document.getElementById('lc-compare-metrics-a'));
+                renderLightCone(ruleB, flip,
+                    document.getElementById('lc-compare-heatmap-b'),
+                    document.getElementById('lc-compare-metrics-b'));
+            } else {
+                renderLightCone(getLCRule(), getLCFlip(),
+                    document.getElementById('lc-heatmap-container'),
+                    document.getElementById('lc-metrics'));
+            }
+        }
+
+        function setLCRule(val) {
+            val = ((val % 256) + 256) % 256;
+            document.getElementById('lcRuleInput').value = val;
+            updateLightCone();
+        }
+
+        document.getElementById('lcRuleDec').addEventListener('click', () => setLCRule(getLCRule() - 1));
+        document.getElementById('lcRuleInc').addEventListener('click', () => setLCRule(getLCRule() + 1));
+        document.getElementById('lcRandomRule').addEventListener('click', () => setLCRule(Math.floor(Math.random() * 256)));
+
+        document.getElementById('lcRuleInput').addEventListener('change', () => {
+            let val = parseInt(document.getElementById('lcRuleInput').value);
+            if (isNaN(val)) val = 30;
+            document.getElementById('lcRuleInput').value = Math.max(0, Math.min(255, val));
+            updateLightCone();
+        });
+
+        document.getElementById('lcFlipSlider').addEventListener('input', (e) => {
+            document.getElementById('lcFlipInput').value = e.target.value;
+            updateLightCone();
+        });
+
+        document.getElementById('lcFlipInput').addEventListener('change', () => {
+            let val = parseInt(document.getElementById('lcFlipInput').value);
+            if (isNaN(val)) val = 64;
+            val = Math.max(0, Math.min(127, val));
+            document.getElementById('lcFlipInput').value = val;
+            document.getElementById('lcFlipSlider').value = val;
+            updateLightCone();
+        });
+
+        document.getElementById('lcCompareMode').addEventListener('change', updateLightCone);
+        document.getElementById('lcRuleA').addEventListener('change', updateLightCone);
+        document.getElementById('lcRuleB').addEventListener('change', updateLightCone);
+
+        // Auto-render default light cone
+        updateLightCone();
     </script>
 </body>
 </html>

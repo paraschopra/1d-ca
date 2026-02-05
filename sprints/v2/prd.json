@@ -396,7 +396,7 @@
       "Changing either control triggers a new perturbation computation",
       "A 'Random Rule' button is available for quick exploration"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Perturbation Light Cones",
@@ -409,7 +409,7 @@
       "For Rule 0 (all cells die), the difference matrix is all zeros after generation 1",
       "For Rule 30 (chaotic), the difference matrix shows an expanding cone of 1s"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Perturbation Light Cones",
@@ -422,7 +422,7 @@
       "The canvas is sized appropriately within the Light Cones tab panel",
       "A color scale bar is shown indicating 0 (no difference) to 1 (different)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Perturbation Light Cones",
@@ -435,7 +435,7 @@
       "Maximum possible speed is 1.0 cell/generation (the light speed of ECA)",
       "Periodic boundary wrap-around is handled correctly when the cone reaches grid edges"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Perturbation Light Cones",
@@ -448,7 +448,7 @@
       "For Class I rules (converge to uniform), speed shows as 0 or near-0",
       "For Class III rules (chaotic), speed shows as close to 1.0"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Perturbation Light Cones",
@@ -461,6 +461,6 @@
       "Rule labels are clearly shown above each heatmap (e.g., 'Rule 30' vs 'Rule 110')",
       "Both heatmaps use the same flip position for a fair comparison"
     ],
-    "passes": false
+    "passes": true
   }
 ]
