@@ -65,3 +65,10 @@ Task 1: Rule-to-Lookup-Table Converter - ✓ COMPLETE (2026-02-05)
 - All 6 tests passing (100%)
 - Test infrastructure set up with JSDOM
 - Run tests: cd tests && node run-tests-jsdom.js
+
+Task 2: Single-Step Evolution Function - ✓ COMPLETE (2026-02-05)
+-----------------------------------------------------------------
+- Implemented evolveRow(row, lookupTable) function
+- Uses wrap-around (periodic) boundary conditions
+- All 5 new tests passing (11 total tests, 100%)
+- Verified: all-zeros behavior, Rule 30 evolution, left/right edge wrap-around

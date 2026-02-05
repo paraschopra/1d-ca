@@ -90,6 +90,32 @@
             return table;
         }
 
+        /**
+         * Evolve a row by one generation using a lookup table
+         * @param {Array<number>} row - Current row (array of 0s and 1s)
+         * @param {Object} lookupTable - Lookup table from ruleToLookupTable
+         * @returns {Array<number>} Next generation row
+         */
+        function evolveRow(row, lookupTable) {
+            const n = row.length;
+            const nextRow = new Array(n);
+
+            for (let i = 0; i < n; i++) {
+                // Get left, center, right neighbors with wrap-around
+                const left = row[(i - 1 + n) % n];
+                const center = row[i];
+                const right = row[(i + 1) % n];
+
+                // Convert neighborhood to decimal index (0-7)
+                const neighborhood = (left << 2) | (center << 1) | right;
+
+                // Look up output value
+                nextRow[i] = lookupTable[neighborhood];
+            }
+
+            return nextRow;
+        }
+
         // ============================================
         // TESTS FOR TASK 1: Rule-to-Lookup-Table
         // ============================================
@@ -125,8 +151,54 @@
             assertEquals(rule255_again, rule255, 'Rule 255 consistent on repeated calls');
         }
 
-        // Run tests
+        // ============================================
+        // TESTS FOR TASK 2: Single-Step Evolution
+        // ============================================
+
+        function testEvolveRow() {
+            console.log('\n=== Testing Single-Step Evolution ===\n');
+
+            // Test 1: All zeros with Rule 0
+            const rule0 = ruleToLookupTable(0);
+            const allZeros = [0, 0, 0, 0, 0, 0, 0, 0];
+            const evolved0 = evolveRow(allZeros, rule0);
+            assertEquals(evolved0, [0, 0, 0, 0, 0, 0, 0, 0],
+                'All zeros with Rule 0 stays all zeros');
+
+            // Test 2: Single center cell with Rule 30
+            const rule30 = ruleToLookupTable(30);
+            const centerCell = [0, 0, 0, 1, 0, 0, 0];
+            const evolved30 = evolveRow(centerCell, rule30);
+            // Rule 30: 000->0, 001->1, 010->1, 011->1, 100->1, 101->0, 110->0, 111->0
+            // Positions: [0,0,0,1,0,0,0]
+            // Neighborhoods at each position (left,center,right):
+            // Pos 0: [0,0,0]=000->0, Pos 1: [0,0,0]=000->0, Pos 2: [0,0,1]=001->1
+            // Pos 3: [0,1,0]=010->1, Pos 4: [1,0,0]=100->1, Pos 5: [0,0,0]=000->0, Pos 6: [0,0,0]=000->0
+            assertEquals(evolved30, [0, 0, 1, 1, 1, 0, 0],
+                'Single center cell evolves correctly with Rule 30');
+
+            // Test 3: Wrap-around at left edge
+            const leftEdge = [1, 0, 0, 0, 0, 0, 0, 0];
+            const evolvedLeft = evolveRow(leftEdge, rule30);
+            // Position 0: left=row[7]=0, center=1, right=0 -> 010 -> 1
+            assert(evolvedLeft[0] === 1, 'Left edge wrap-around correct (position 0)');
+
+            // Test 4: Wrap-around at right edge
+            const rightEdge = [0, 0, 0, 0, 0, 0, 0, 1];
+            const evolvedRight = evolveRow(rightEdge, rule30);
+            // Position 7: left=0, center=1, right=row[0]=0 -> 010 -> 1
+            assert(evolvedRight[7] === 1, 'Right edge wrap-around correct (position 7)');
+
+            // Test 5: Output length matches input length
+            const testRow = [1, 0, 1, 0, 1, 0, 1, 0, 1, 0];
+            const evolvedTest = evolveRow(testRow, rule30);
+            assertEquals(evolvedTest.length, testRow.length,
+                'Output row length matches input row length');
+        }
+
+        // Run all tests
         testRuleToLookupTable();
+        testEvolveRow();
         showSummary();
     </script>
 </body>

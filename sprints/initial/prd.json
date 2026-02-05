@@ -21,7 +21,7 @@
       "Verify wrap-around at right edge: place a 1 at the last position, evolve, and confirm the rightmost cell correctly uses position 0 as its right neighbor",
       "Verify the output row has the same length as the input row"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Core CA Engine",
