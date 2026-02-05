@@ -93,7 +93,7 @@
       "Multiple series can be rendered simultaneously without overlap issues",
       "The chart handles edge cases: empty series, single point series, series with identical values"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Custom Charting Engine",

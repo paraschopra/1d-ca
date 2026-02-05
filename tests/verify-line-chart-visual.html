@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Line Chart Visual Verification</title>
+  <style>
+    body {
+      font-family: monospace;
+      padding: 20px;
+      background: #0a0a0a;
+      color: #e0e0e0;
+    }
+    h1 {
+      color: #00ff88;
+    }
+    .test-section {
+      margin: 20px 0;
+      padding: 20px;
+      background: #1a1a1a;
+      border-radius: 8px;
+    }
+    .chart-container {
+      background: #1a1a1a;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Line Chart Visual Verification</h1>
+
+  <div class="test-section">
+    <h2>Test 1: Single Series</h2>
+    <div id="chart1" class="chart-container"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>Test 2: Multiple Series</h2>
+    <div id="chart2" class="chart-container"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>Test 3: Edge Case - Same Y Values</h2>
+    <div id="chart3" class="chart-container"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>Test 4: Empty Data</h2>
+    <div id="chart4" class="chart-container"></div>
+  </div>
+
+  <script>
+    // Inline the createLineChart function (copy from v2-research-tools.html)
+    function createLineChart(container, series, config = {}) {
+      const width = config.width || 600;
+      const height = config.height || 400;
+      const margins = config.margins || { top: 20, right: 20, bottom: 40, left: 50 };
+      const xLabel = config.xLabel || 'X Axis';
+      const yLabel = config.yLabel || 'Y Axis';
+
+      container.innerHTML = '';
+
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+      svg.setAttribute('width', width);
+      svg.setAttribute('height', height);
+      svg.style.background = '#1a1a1a';
+      container.appendChild(svg);
+
+      if (!series || series.length === 0) {
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', width / 2);
+        text.setAttribute('y', height / 2);
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('fill', '#888');
+        text.textContent = 'No data';
+        svg.appendChild(text);
+        return svg;
+      }
+
+      let allPoints = [];
+      series.forEach(s => {
+        if (s.points && s.points.length > 0) {
+          allPoints = allPoints.concat(s.points);
+        }
+      });
+
+      if (allPoints.length === 0) {
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', width / 2);
+        text.setAttribute('y', height / 2);
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('fill', '#888');
+        text.textContent = 'No data';
+        svg.appendChild(text);
+        return svg;
+      }
+
+      const xValues = allPoints.map(p => p.x);
+      const yValues = allPoints.map(p => p.y);
+      const xMin = Math.min(...xValues);
+      const xMax = Math.max(...xValues);
+      const yMin = Math.min(...yValues);
+      const yMax = Math.max(...yValues);
+
+      const xRange = xMax - xMin || 1;
+      const yRange = yMax - yMin || 1;
+      const xPadding = xRange * 0.1;
+      const yPadding = yRange * 0.1;
+
+      const plotWidth = width - margins.left - margins.right;
+      const plotHeight = height - margins.top - margins.bottom;
+
+      const xScale = (x) => margins.left + ((x - (xMin - xPadding)) / (xRange + 2 * xPadding)) * plotWidth;
+      const yScale = (y) => margins.top + plotHeight - ((y - (yMin - yPadding)) / (yRange + 2 * yPadding)) * plotHeight;
+
+      // Draw gridlines
+      const gridGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      for (let i = 0; i <= 5; i++) {
+        const x = margins.left + (i / 5) * plotWidth;
+        const y = margins.top + (i / 5) * plotHeight;
+
+        const vLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        vLine.setAttribute('x1', x);
+        vLine.setAttribute('y1', margins.top);
+        vLine.setAttribute('x2', x);
+        vLine.setAttribute('y2', margins.top + plotHeight);
+        vLine.setAttribute('stroke', '#333');
+        vLine.setAttribute('stroke-width', '1');
+        gridGroup.appendChild(vLine);
+
+        const hLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        hLine.setAttribute('x1', margins.left);
+        hLine.setAttribute('y1', y);
+        hLine.setAttribute('x2', margins.left + plotWidth);
+        hLine.setAttribute('y2', y);
+        hLine.setAttribute('stroke', '#333');
+        hLine.setAttribute('stroke-width', '1');
+        gridGroup.appendChild(hLine);
+      }
+      svg.appendChild(gridGroup);
+
+      // Draw axes
+      const axesGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+      const xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      xAxis.setAttribute('x1', margins.left);
+      xAxis.setAttribute('y1', margins.top + plotHeight);
+      xAxis.setAttribute('x2', margins.left + plotWidth);
+      xAxis.setAttribute('y2', margins.top + plotHeight);
+      xAxis.setAttribute('stroke', '#666');
+      xAxis.setAttribute('stroke-width', '2');
+      axesGroup.appendChild(xAxis);
+
+      const yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      yAxis.setAttribute('x1', margins.left);
+      yAxis.setAttribute('y1', margins.top);
+      yAxis.setAttribute('x2', margins.left);
+      yAxis.setAttribute('y2', margins.top + plotHeight);
+      yAxis.setAttribute('stroke', '#666');
+      yAxis.setAttribute('stroke-width', '2');
+      axesGroup.appendChild(yAxis);
+
+      svg.appendChild(axesGroup);
+
+      // Draw tick marks and labels
+      const tickGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+      for (let i = 0; i <= 5; i++) {
+        const x = margins.left + (i / 5) * plotWidth;
+        const y = margins.top + plotHeight;
+        const xValue = xMin - xPadding + (i / 5) * (xRange + 2 * xPadding);
+
+        const xTick = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        xTick.setAttribute('x1', x);
+        xTick.setAttribute('y1', y);
+        xTick.setAttribute('x2', x);
+        xTick.setAttribute('y2', y + 5);
+        xTick.setAttribute('stroke', '#666');
+        xTick.setAttribute('stroke-width', '2');
+        tickGroup.appendChild(xTick);
+
+        const xText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        xText.setAttribute('x', x);
+        xText.setAttribute('y', y + 20);
+        xText.setAttribute('text-anchor', 'middle');
+        xText.setAttribute('fill', '#aaa');
+        xText.setAttribute('font-size', '10');
+        xText.textContent = xValue.toFixed(2);
+        tickGroup.appendChild(xText);
+
+        const yPos = margins.top + (i / 5) * plotHeight;
+        const yValue = yMax + yPadding - (i / 5) * (yRange + 2 * yPadding);
+
+        const yTick = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        yTick.setAttribute('x1', margins.left - 5);
+        yTick.setAttribute('y1', yPos);
+        yTick.setAttribute('x2', margins.left);
+        yTick.setAttribute('y2', yPos);
+        yTick.setAttribute('stroke', '#666');
+        yTick.setAttribute('stroke-width', '2');
+        tickGroup.appendChild(yTick);
+
+        const yText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        yText.setAttribute('x', margins.left - 10);
+        yText.setAttribute('y', yPos + 3);
+        yText.setAttribute('text-anchor', 'end');
+        yText.setAttribute('fill', '#aaa');
+        yText.setAttribute('font-size', '10');
+        yText.textContent = yValue.toFixed(2);
+        tickGroup.appendChild(yText);
+      }
+
+      svg.appendChild(tickGroup);
+
+      // Axis titles
+      const xLabelEl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      xLabelEl.setAttribute('x', margins.left + plotWidth / 2);
+      xLabelEl.setAttribute('y', height - 5);
+      xLabelEl.setAttribute('text-anchor', 'middle');
+      xLabelEl.setAttribute('fill', '#00ff88');
+      xLabelEl.setAttribute('font-size', '12');
+      xLabelEl.textContent = xLabel;
+      svg.appendChild(xLabelEl);
+
+      const yLabelEl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      yLabelEl.setAttribute('x', 10);
+      yLabelEl.setAttribute('y', margins.top + plotHeight / 2);
+      yLabelEl.setAttribute('text-anchor', 'middle');
+      yLabelEl.setAttribute('fill', '#00ff88');
+      yLabelEl.setAttribute('font-size', '12');
+      yLabelEl.setAttribute('transform', `rotate(-90, 10, ${margins.top + plotHeight / 2})`);
+      yLabelEl.textContent = yLabel;
+      svg.appendChild(yLabelEl);
+
+      // Draw line series
+      const linesGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+      series.forEach(s => {
+        if (!s.points || s.points.length === 0) return;
+
+        const color = s.color || '#00ff88';
+        const name = s.name || 'Series';
+
+        let pathData = '';
+        s.points.forEach((p, i) => {
+          const x = xScale(p.x);
+          const y = yScale(p.y);
+
+          if (!isFinite(x) || !isFinite(y)) return;
+
+          if (i === 0) {
+            pathData += `M ${x} ${y}`;
+          } else {
+            pathData += ` L ${x} ${y}`;
+          }
+        });
+
+        if (pathData) {
+          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          path.setAttribute('d', pathData);
+          path.setAttribute('fill', 'none');
+          path.setAttribute('stroke', color);
+          path.setAttribute('stroke-width', '2');
+          path.setAttribute('data-series-name', name);
+          linesGroup.appendChild(path);
+        }
+      });
+
+      svg.appendChild(linesGroup);
+
+      return svg;
+    }
+
+    // Run visual tests
+    // Test 1: Single series
+    createLineChart(document.getElementById('chart1'), [
+      {
+        name: 'Linear',
+        color: '#00ff88',
+        points: Array.from({ length: 20 }, (_, i) => ({ x: i, y: i * 2 }))
+      }
+    ], { xLabel: 'X', yLabel: 'Y', width: 700, height: 350 });
+
+    // Test 2: Multiple series
+    createLineChart(document.getElementById('chart2'), [
+      {
+        name: 'Sine',
+        color: '#ff6666',
+        points: Array.from({ length: 50 }, (_, i) => ({ x: i, y: Math.sin(i / 5) * 10 }))
+      },
+      {
+        name: 'Cosine',
+        color: '#6666ff',
+        points: Array.from({ length: 50 }, (_, i) => ({ x: i, y: Math.cos(i / 5) * 10 }))
+      },
+      {
+        name: 'Linear',
+        color: '#00ff88',
+        points: Array.from({ length: 50 }, (_, i) => ({ x: i, y: i / 5 }))
+      }
+    ], { xLabel: 'Time', yLabel: 'Amplitude', width: 800, height: 400 });
+
+    // Test 3: Same Y values
+    createLineChart(document.getElementById('chart3'), [
+      {
+        name: 'Constant',
+        color: '#ffff00',
+        points: Array.from({ length: 20 }, (_, i) => ({ x: i, y: 5 }))
+      }
+    ], { xLabel: 'X', yLabel: 'Y', width: 700, height: 350 });
+
+    // Test 4: Empty data
+    createLineChart(document.getElementById('chart4'), [], { width: 700, height: 350 });
+  </script>
+</body>
+</html>

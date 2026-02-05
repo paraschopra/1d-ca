@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Line Chart Simple Test</title>
+  <style>
+    body {
+      font-family: monospace;
+      padding: 20px;
+      background: #1a1a1a;
+      color: #ccc;
+    }
+    #test-output {
+      padding: 20px;
+      background: #2a2a2a;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    #visual-test {
+      padding: 20px;
+      background: #2a2a2a;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Line Chart Simple Test</h1>
+  <div id="test-output">Loading...</div>
+  <div id="visual-test"></div>
+
+  <!-- Load the source file that contains createLineChart -->
+  <script src="../src/v2-research-tools.html"></script>
+
+  <script>
+    // Check if function exists
+    if (typeof createLineChart === 'function') {
+      document.getElementById('test-output').innerHTML = '<div style="color: #00ff88">✓ createLineChart function found!</div>';
+
+      // Test it
+      const series = [
+        {
+          name: 'Sine Wave',
+          color: '#ff6666',
+          points: Array.from({ length: 50 }, (_, i) => ({
+            x: i,
+            y: Math.sin(i / 5) * 10
+          }))
+        },
+        {
+          name: 'Cosine Wave',
+          color: '#6666ff',
+          points: Array.from({ length: 50 }, (_, i) => ({
+            x: i,
+            y: Math.cos(i / 5) * 10
+          }))
+        },
+        {
+          name: 'Linear',
+          color: '#00ff88',
+          points: Array.from({ length: 50 }, (_, i) => ({
+            x: i,
+            y: i / 5
+          }))
+        }
+      ];
+
+      const container = document.getElementById('visual-test');
+      const svg = createLineChart(container, series, {
+        width: 900,
+        height: 600,
+        xLabel: 'Time',
+        yLabel: 'Amplitude'
+      });
+
+      if (svg) {
+        document.getElementById('test-output').innerHTML += '<div style="color: #00ff88">✓ Line chart rendered successfully!</div>';
+        document.getElementById('test-output').innerHTML += `<div style="color: #aaa">SVG dimensions: ${svg.getAttribute('width')}x${svg.getAttribute('height')}</div>`;
+        document.getElementById('test-output').innerHTML += `<div style="color: #aaa">Paths rendered: ${svg.querySelectorAll('path[data-series-name]').length}</div>`;
+      }
+    } else {
+      document.getElementById('test-output').innerHTML = '<div style="color: #ff6666">✗ createLineChart function NOT found</div>';
+      document.getElementById('test-output').innerHTML += '<div style="color: #aaa">typeof createLineChart: ' + typeof createLineChart + '</div>';
+    }
+  </script>
+</body>
+</html>

@@ -121,3 +121,40 @@ Implemented SVG scatter plot renderer with full axes and labels:
    - Dark theme styling matches app design
 
 Next: Line charts (Task 8) and heatmaps (Task 10) for Phase Explorer and Light Cones
+
+## 2026-02-05 - Custom Charting Engine: Line Chart (Task 8) - COMPLETE
+
+Implemented SVG line chart renderer with full multi-series support:
+
+1. Created createLineChart() function in src/v2-research-tools.html (lines 930-1164):
+   - Accepts container element, series array, and config object
+   - Configurable width, height, margins, axis labels
+
+2. Features implemented:
+   - SVG rendering with proper viewBox and dimensions
+   - Multiple series support with distinct colors per series
+   - Each series rendered as SVG path (no fill, stroke only)
+   - Global axis scaling across ALL series data (not per-series)
+   - Gridlines (5x5 grid pattern)
+   - X and Y axes with tick marks and labels
+   - Axis titles in green (#00ff88)
+   - Edge case handling:
+     - Empty series array → "No data" message
+     - All series with empty points → "No data" message
+     - Single point series → renders single M command (no error)
+     - Identical x or y values → handles with padding
+     - NaN/Infinity values → skipped gracefully with isFirstValidPoint tracking
+
+3. Tests: Visual verification passing (tests/verify-line-chart-visual.html)
+   - Single series, multiple series, edge cases all render correctly
+   - Screenshot saved to scratchpad/line-chart-visual-test.png
+
+4. Integration:
+   - Demo chart added to Phase Explorer tab showing 3-series example
+   - Dark theme styling matches app design (#1a1a1a background, #00ff88 labels)
+
+5. Codex verification:
+   - Confirmed implementation meets all PRD requirements
+   - Minor robustness improvement: fixed invalid point handling to use isFirstValidPoint flag
+
+Next: Task 9 - Add legend and series color coding to the line chart

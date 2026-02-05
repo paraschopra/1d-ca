@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Line Chart Tests</title>
+  <style>
+    body {
+      font-family: monospace;
+      padding: 20px;
+      background: #1a1a1a;
+      color: #ccc;
+    }
+    .test-result {
+      padding: 8px;
+      margin: 4px 0;
+      border-radius: 4px;
+    }
+    .test-result.pass {
+      background: #1a3a1a;
+      color: #00ff88;
+    }
+    .test-result.fail {
+      background: #3a1a1a;
+      color: #ff6666;
+    }
+    .summary {
+      margin: 20px 0;
+      padding: 16px;
+      background: #2a2a2a;
+      border-radius: 8px;
+      font-size: 18px;
+    }
+    #test-container {
+      margin: 20px 0;
+      padding: 20px;
+      background: #2a2a2a;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Line Chart Renderer Tests</h1>
+  <div id="results"></div>
+  <div class="summary" id="summary"></div>
+  <div id="test-container"></div>
+
+  <script>
+    // Test harness
+    const results = [];
+
+    function assert(condition, message) {
+      const passed = !!condition;
+      results.push({ passed, message });
+
+      const div = document.createElement('div');
+      div.className = `test-result ${passed ? 'pass' : 'fail'}`;
+      div.textContent = `${passed ? '✓' : '✗'} ${message}`;
+      document.getElementById('results').appendChild(div);
+
+      if (!passed) {
+        console.error(`FAIL: ${message}`);
+      }
+
+      return passed;
+    }
+
+    function updateSummary() {
+      const passed = results.filter(r => r.passed).length;
+      const total = results.length;
+      const summary = document.getElementById('summary');
+      summary.textContent = `${passed}/${total} tests passed`;
+      summary.style.color = passed === total ? '#00ff88' : '#ff6666';
+    }
+
+    // Copy the createLineChart function from v2-research-tools.html
+    // (Will be filled in during implementation)
+    function createLineChart(container, series, config = {}) {
+      const width = config.width || 600;
+      const height = config.height || 400;
+      const margin = config.margin || { top: 40, right: 120, bottom: 60, left: 60 };
+      const xLabel = config.xLabel || 'X';
+      const yLabel = config.yLabel || 'Y';
+
+      const plotWidth = width - margin.left - margin.right;
+      const plotHeight = height - margin.top - margin.bottom;
+
+      // Clear container
+      container.innerHTML = '';
+
+      // Handle edge cases
+      if (!series || series.length === 0) {
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+        svg.style.width = '100%';
+        svg.style.height = 'auto';
+        container.appendChild(svg);
+        return;
+      }
+
+      // Collect all points from all series to determine axis ranges
+      let allPoints = [];
+      series.forEach(s => {
+        if (s.points && s.points.length > 0) {
+          allPoints = allPoints.concat(s.points);
+        }
+      });
+
+      if (allPoints.length === 0) {
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+        svg.style.width = '100%';
+        svg.style.height = 'auto';
+        container.appendChild(svg);
+        return;
+      }
+
+      const xMin = Math.min(...allPoints.map(p => p.x));
+      const xMax = Math.max(...allPoints.map(p => p.x));
+      const yMin = Math.min(...allPoints.map(p => p.y));
+      const yMax = Math.max(...allPoints.map(p => p.y));
+
+      // Add padding to ranges
+      const xPadding = (xMax - xMin) * 0.05 || 0.5;
+      const yPadding = (yMax - yMin) * 0.1 || 0.5;
+      const xRange = [xMin - xPadding, xMax + xPadding];
+      const yRange = [yMin - yPadding, yMax + yPadding];
+
+      // Create SVG
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+      svg.style.width = '100%';
+      svg.style.height = 'auto';
+
+      // Scale functions
+      const scaleX = (x) => margin.left + ((x - xRange[0]) / (xRange[1] - xRange[0])) * plotWidth;
+      const scaleY = (y) => margin.top + plotHeight - ((y - yRange[0]) / (yRange[1] - yRange[0])) * plotHeight;
+
+      // Draw gridlines
+      const gridGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      for (let i = 0; i <= 5; i++) {
+        // Vertical gridlines
+        const x = margin.left + (i / 5) * plotWidth;
+        const vLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        vLine.setAttribute('x1', x);
+        vLine.setAttribute('y1', margin.top);
+        vLine.setAttribute('x2', x);
+        vLine.setAttribute('y2', margin.top + plotHeight);
+        vLine.setAttribute('stroke', '#333');
+        vLine.setAttribute('stroke-width', '1');
+        gridGroup.appendChild(vLine);
+
+        // Horizontal gridlines
+        const y = margin.top + (i / 5) * plotHeight;
+        const hLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        hLine.setAttribute('x1', margin.left);
+        hLine.setAttribute('y1', y);
+        hLine.setAttribute('x2', margin.left + plotWidth);
+        hLine.setAttribute('y2', y);
+        hLine.setAttribute('stroke', '#333');
+        hLine.setAttribute('stroke-width', '1');
+        gridGroup.appendChild(hLine);
+      }
+      svg.appendChild(gridGroup);
+
+      // Draw axes
+      const axesGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+      // X-axis
+      const xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      xAxis.setAttribute('x1', margin.left);
+      xAxis.setAttribute('y1', margin.top + plotHeight);
+      xAxis.setAttribute('x2', margin.left + plotWidth);
+      xAxis.setAttribute('y2', margin.top + plotHeight);
+      xAxis.setAttribute('stroke', '#666');
+      xAxis.setAttribute('stroke-width', '2');
+      axesGroup.appendChild(xAxis);
+
+      // Y-axis
+      const yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      yAxis.setAttribute('x1', margin.left);
+      yAxis.setAttribute('y1', margin.top);
+      yAxis.setAttribute('x2', margin.left);
+      yAxis.setAttribute('y2', margin.top + plotHeight);
+      yAxis.setAttribute('stroke', '#666');
+      yAxis.setAttribute('stroke-width', '2');
+      axesGroup.appendChild(yAxis);
+
+      svg.appendChild(axesGroup);
+
+      // Draw tick marks and labels
+      const ticksGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+      for (let i = 0; i <= 5; i++) {
+        // X-axis ticks
+        const xVal = xRange[0] + (i / 5) * (xRange[1] - xRange[0]);
+        const xPos = margin.left + (i / 5) * plotWidth;
+
+        const xTick = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        xTick.setAttribute('x1', xPos);
+        xTick.setAttribute('y1', margin.top + plotHeight);
+        xTick.setAttribute('x2', xPos);
+        xTick.setAttribute('y2', margin.top + plotHeight + 5);
+        xTick.setAttribute('stroke', '#666');
+        xTick.setAttribute('stroke-width', '1');
+        ticksGroup.appendChild(xTick);
+
+        const xTickText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        xTickText.setAttribute('x', xPos);
+        xTickText.setAttribute('y', margin.top + plotHeight + 20);
+        xTickText.setAttribute('text-anchor', 'middle');
+        xTickText.setAttribute('fill', '#999');
+        xTickText.setAttribute('font-size', '12');
+        xTickText.textContent = xVal.toFixed(2);
+        ticksGroup.appendChild(xTickText);
+
+        // Y-axis ticks
+        const yVal = yRange[0] + (i / 5) * (yRange[1] - yRange[0]);
+        const yPos = margin.top + plotHeight - (i / 5) * plotHeight;
+
+        const yTick = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        yTick.setAttribute('x1', margin.left - 5);
+        yTick.setAttribute('y1', yPos);
+        yTick.setAttribute('x2', margin.left);
+        yTick.setAttribute('y2', yPos);
+        yTick.setAttribute('stroke', '#666');
+        yTick.setAttribute('stroke-width', '1');
+        ticksGroup.appendChild(yTick);
+
+        const yTickText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        yTickText.setAttribute('x', margin.left - 10);
+        yTickText.setAttribute('y', yPos + 4);
+        yTickText.setAttribute('text-anchor', 'end');
+        yTickText.setAttribute('fill', '#999');
+        yTickText.setAttribute('font-size', '12');
+        yTickText.textContent = yVal.toFixed(2);
+        ticksGroup.appendChild(yTickText);
+      }
+
+      svg.appendChild(ticksGroup);
+
+      // Draw axis labels
+      const labelsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+      const xLabelText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      xLabelText.setAttribute('x', margin.left + plotWidth / 2);
+      xLabelText.setAttribute('y', height - 10);
+      xLabelText.setAttribute('text-anchor', 'middle');
+      xLabelText.setAttribute('fill', '#00ff88');
+      xLabelText.setAttribute('font-size', '14');
+      xLabelText.setAttribute('font-weight', 'bold');
+      xLabelText.textContent = xLabel;
+      labelsGroup.appendChild(xLabelText);
+
+      const yLabelText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      yLabelText.setAttribute('x', -(margin.top + plotHeight / 2));
+      yLabelText.setAttribute('y', 15);
+      yLabelText.setAttribute('text-anchor', 'middle');
+      yLabelText.setAttribute('fill', '#00ff88');
+      yLabelText.setAttribute('font-size', '14');
+      yLabelText.setAttribute('font-weight', 'bold');
+      yLabelText.setAttribute('transform', 'rotate(-90)');
+      yLabelText.textContent = yLabel;
+      labelsGroup.appendChild(yLabelText);
+
+      svg.appendChild(labelsGroup);
+
+      // Draw line series
+      const linesGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+      series.forEach(s => {
+        if (!s.points || s.points.length === 0) return;
+
+        const color = s.color || '#00ff88';
+        const name = s.name || 'Series';
+
+        // Create path
+        let pathData = '';
+        s.points.forEach((p, i) => {
+          const x = scaleX(p.x);
+          const y = scaleY(p.y);
+          if (i === 0) {
+            pathData += `M ${x} ${y}`;
+          } else {
+            pathData += ` L ${x} ${y}`;
+          }
+        });
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', pathData);
+        path.setAttribute('fill', 'none');
+        path.setAttribute('stroke', color);
+        path.setAttribute('stroke-width', '2');
+        path.setAttribute('data-series-name', name);
+        linesGroup.appendChild(path);
+      });
+
+      svg.appendChild(linesGroup);
+
+      container.appendChild(svg);
+    }
+
+    // Run tests
+    const testContainer = document.getElementById('test-container');
+
+    // Test 1: Empty series array
+    {
+      const div = document.createElement('div');
+      createLineChart(div, []);
+      const svg = div.querySelector('svg');
+      assert(svg !== null, 'Test 1: SVG created with empty series array');
+      assert(svg.querySelector('path') === null, 'Test 1: No paths rendered for empty series');
+    }
+
+    // Test 2: Single series with single point
+    {
+      const div = document.createElement('div');
+      const series = [
+        { name: 'Single', color: '#00ff88', points: [{ x: 5, y: 10 }] }
+      ];
+      createLineChart(div, series);
+      const svg = div.querySelector('svg');
+      assert(svg !== null, 'Test 2: SVG created with single point');
+      const path = svg.querySelector('path[data-series-name="Single"]');
+      assert(path !== null, 'Test 2: Path created for single point series');
+      assert(path.getAttribute('stroke') === '#00ff88', 'Test 2: Path color matches series color');
+    }
+
+    // Test 3: Single series with multiple points
+    {
+      const div = document.createElement('div');
+      const series = [
+        {
+          name: 'Linear',
+          color: '#ff6666',
+          points: [
+            { x: 0, y: 0 },
+            { x: 1, y: 1 },
+            { x: 2, y: 2 },
+            { x: 3, y: 3 }
+          ]
+        }
+      ];
+      createLineChart(div, series);
+      const svg = div.querySelector('svg');
+      const path = svg.querySelector('path[data-series-name="Linear"]');
+      assert(path !== null, 'Test 3: Path created for multi-point series');
+      assert(path.getAttribute('fill') === 'none', 'Test 3: Path has no fill');
+      assert(path.getAttribute('stroke-width') === '2', 'Test 3: Path has correct stroke width');
+    }
+
+    // Test 4: Multiple series
+    {
+      const div = document.createElement('div');
+      const series = [
+        {
+          name: 'Series A',
+          color: '#ff0000',
+          points: [{ x: 0, y: 0 }, { x: 1, y: 2 }]
+        },
+        {
+          name: 'Series B',
+          color: '#00ff00',
+          points: [{ x: 0, y: 1 }, { x: 1, y: 1 }]
+        },
+        {
+          name: 'Series C',
+          color: '#0000ff',
+          points: [{ x: 0, y: 2 }, { x: 1, y: 0 }]
+        }
+      ];
+      createLineChart(div, series);
+      const svg = div.querySelector('svg');
+      const paths = svg.querySelectorAll('path[data-series-name]');
+      assert(paths.length === 3, 'Test 4: Three paths created for three series');
+      assert(svg.querySelector('path[data-series-name="Series A"]').getAttribute('stroke') === '#ff0000', 'Test 4: Series A color correct');
+      assert(svg.querySelector('path[data-series-name="Series B"]').getAttribute('stroke') === '#00ff00', 'Test 4: Series B color correct');
+      assert(svg.querySelector('path[data-series-name="Series C"]').getAttribute('stroke') === '#0000ff', 'Test 4: Series C color correct');
+    }
+
+    // Test 5: All points at same x value
+    {
+      const div = document.createElement('div');
+      const series = [
+        {
+          name: 'Same X',
+          color: '#ffff00',
+          points: [{ x: 5, y: 0 }, { x: 5, y: 5 }, { x: 5, y: 10 }]
+        }
+      ];
+      createLineChart(div, series);
+      const svg = div.querySelector('svg');
+      const path = svg.querySelector('path[data-series-name="Same X"]');
+      assert(path !== null, 'Test 5: Path created when all points have same x');
+      const d = path.getAttribute('d');
+      assert(d && d.includes('M') && d.includes('L'), 'Test 5: Path data contains move and line commands');
+    }
+
+    // Test 6: All points at same y value
+    {
+      const div = document.createElement('div');
+      const series = [
+        {
+          name: 'Same Y',
+          color: '#ff00ff',
+          points: [{ x: 0, y: 7 }, { x: 5, y: 7 }, { x: 10, y: 7 }]
+        }
+      ];
+      createLineChart(div, series);
+      const svg = div.querySelector('svg');
+      const path = svg.querySelector('path[data-series-name="Same Y"]');
+      assert(path !== null, 'Test 6: Path created when all points have same y');
+    }
+
+    // Test 7: Series with empty points array
+    {
+      const div = document.createElement('div');
+      const series = [
+        { name: 'Empty', color: '#00ffff', points: [] },
+        { name: 'Valid', color: '#ff0000', points: [{ x: 0, y: 0 }, { x: 1, y: 1 }] }
+      ];
+      createLineChart(div, series);
+      const svg = div.querySelector('svg');
+      assert(svg.querySelector('path[data-series-name="Empty"]') === null, 'Test 7: No path for series with empty points');
+      assert(svg.querySelector('path[data-series-name="Valid"]') !== null, 'Test 7: Path created for valid series');
+    }
+
+    // Test 8: Axes are drawn
+    {
+      const div = document.createElement('div');
+      const series = [
+        { name: 'Test', color: '#00ff88', points: [{ x: 0, y: 0 }, { x: 10, y: 10 }] }
+      ];
+      createLineChart(div, series);
+      const svg = div.querySelector('svg');
+      const lines = svg.querySelectorAll('line');
+      assert(lines.length >= 2, 'Test 8: At least 2 lines (axes) are drawn');
+    }
+
+    // Test 9: Gridlines are drawn
+    {
+      const div = document.createElement('div');
+      const series = [
+        { name: 'Test', color: '#00ff88', points: [{ x: 0, y: 0 }, { x: 10, y: 10 }] }
+      ];
+      createLineChart(div, series);
+      const svg = div.querySelector('svg');
+      const gridlines = Array.from(svg.querySelectorAll('line')).filter(line =>
+        line.getAttribute('stroke') === '#333'
+      );
+      assert(gridlines.length >= 10, 'Test 9: Gridlines are drawn (at least 10 expected for 5x5 grid)');
+    }
+
+    // Test 10: Custom axis labels
+    {
+      const div = document.createElement('div');
+      const series = [
+        { name: 'Test', color: '#00ff88', points: [{ x: 0, y: 0 }, { x: 1, y: 1 }] }
+      ];
+      createLineChart(div, series, {
+        xLabel: 'Time (s)',
+        yLabel: 'Value'
+      });
+      const svg = div.querySelector('svg');
+      const texts = Array.from(svg.querySelectorAll('text'));
+      const xLabelFound = texts.some(t => t.textContent === 'Time (s)');
+      const yLabelFound = texts.some(t => t.textContent === 'Value');
+      assert(xLabelFound, 'Test 10: Custom X-axis label rendered');
+      assert(yLabelFound, 'Test 10: Custom Y-axis label rendered');
+    }
+
+    // Test 11: Axes scale to encompass all series data
+    {
+      const div = document.createElement('div');
+      const series = [
+        { name: 'A', color: '#ff0000', points: [{ x: 0, y: 0 }, { x: 1, y: 1 }] },
+        { name: 'B', color: '#00ff00', points: [{ x: 5, y: 10 }, { x: 10, y: 20 }] }
+      ];
+      createLineChart(div, series);
+      const svg = div.querySelector('svg');
+      const pathA = svg.querySelector('path[data-series-name="A"]');
+      const pathB = svg.querySelector('path[data-series-name="B"]');
+      assert(pathA !== null && pathB !== null, 'Test 11: Both series rendered');
+      // Both paths should be visible (have valid path data)
+      assert(pathA.getAttribute('d').includes('M'), 'Test 11: Series A has path data');
+      assert(pathB.getAttribute('d').includes('M'), 'Test 11: Series B has path data');
+    }
+
+    // Test 12: Visual rendering test
+    {
+      testContainer.innerHTML = '<h3>Visual Test: Multiple Series Line Chart</h3>';
+      const div = document.createElement('div');
+      div.style.background = '#1a1a1a';
+      div.style.padding = '20px';
+      div.style.borderRadius = '8px';
+
+      const series = [
+        {
+          name: 'Sine',
+          color: '#ff6666',
+          points: Array.from({ length: 50 }, (_, i) => ({
+            x: i,
+            y: Math.sin(i / 5) * 10
+          }))
+        },
+        {
+          name: 'Cosine',
+          color: '#6666ff',
+          points: Array.from({ length: 50 }, (_, i) => ({
+            x: i,
+            y: Math.cos(i / 5) * 10
+          }))
+        },
+        {
+          name: 'Linear',
+          color: '#00ff88',
+          points: Array.from({ length: 50 }, (_, i) => ({
+            x: i,
+            y: i / 5
+          }))
+        }
+      ];
+
+      createLineChart(div, series, {
+        width: 800,
+        height: 500,
+        xLabel: 'Time',
+        yLabel: 'Amplitude'
+      });
+
+      testContainer.appendChild(div);
+
+      const svg = div.querySelector('svg');
+      assert(svg !== null, 'Test 12: Visual test chart rendered');
+    }
+
+    updateSummary();
+  </script>
+</body>
+</html>

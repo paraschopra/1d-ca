@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Line Chart Tests (Import-based)</title>
+  <style>
+    body {
+      font-family: monospace;
+      padding: 20px;
+      background: #1a1a1a;
+      color: #ccc;
+    }
+    .test-result {
+      padding: 8px;
+      margin: 4px 0;
+      border-radius: 4px;
+    }
+    .test-result.pass {
+      background: #1a3a1a;
+      color: #00ff88;
+    }
+    .test-result.fail {
+      background: #3a1a1a;
+      color: #ff6666;
+    }
+    .summary {
+      margin: 20px 0;
+      padding: 16px;
+      background: #2a2a2a;
+      border-radius: 8px;
+      font-size: 18px;
+    }
+    #test-container {
+      margin: 20px 0;
+      padding: 20px;
+      background: #2a2a2a;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Line Chart Renderer Tests (Importing from v2)</h1>
+  <div id="results"></div>
+  <div class="summary" id="summary"></div>
+  <div id="test-container"></div>
+
+  <!-- Hidden iframe to load the actual implementation -->
+  <iframe id="source-frame" src="../src/v2-research-tools.html" style="display: none;"></iframe>
+
+  <script>
+    // Wait for iframe to load, then run tests
+    document.getElementById('source-frame').addEventListener('load', function() {
+      const sourceWindow = this.contentWindow;
+      const createLineChart = sourceWindow.createLineChart;
+
+      if (!createLineChart) {
+        document.getElementById('results').innerHTML = '<div class="test-result fail">✗ CRITICAL: createLineChart function not found in v2-research-tools.html. Make sure it\'s defined in global scope.</div>';
+        return;
+      }
+
+      // Test harness
+      const results = [];
+
+      function assert(condition, message) {
+        const passed = !!condition;
+        results.push({ passed, message });
+
+        const div = document.createElement('div');
+        div.className = `test-result ${passed ? 'pass' : 'fail'}`;
+        div.textContent = `${passed ? '✓' : '✗'} ${message}`;
+        document.getElementById('results').appendChild(div);
+
+        if (!passed) {
+          console.error(`FAIL: ${message}`, condition);
+        }
+
+        return passed;
+      }
+
+      function updateSummary() {
+        const passed = results.filter(r => r.passed).length;
+        const total = results.length;
+        const summary = document.getElementById('summary');
+        summary.textContent = `${passed}/${total} tests passed`;
+        summary.style.color = passed === total ? '#00ff88' : '#ff6666';
+      }
+
+      // Run tests
+      const testContainer = document.getElementById('test-container');
+
+      // Test 1: Empty series array
+      {
+        const div = document.createElement('div');
+        const svg = createLineChart(div, []);
+        assert(svg !== null, 'Test 1: SVG created with empty series array');
+        assert(svg.querySelector('path[data-series-name]') === null, 'Test 1: No paths rendered for empty series');
+      }
+
+      // Test 2: Null/undefined series
+      {
+        const div1 = document.createElement('div');
+        const svg1 = createLineChart(div1, null);
+        assert(svg1 !== null, 'Test 2a: SVG created with null series');
+
+        const div2 = document.createElement('div');
+        const svg2 = createLineChart(div2, undefined);
+        assert(svg2 !== null, 'Test 2b: SVG created with undefined series');
+      }
+
+      // Test 3: Single series with single point
+      {
+        const div = document.createElement('div');
+        const series = [
+          { name: 'Single', color: '#00ff88', points: [{ x: 5, y: 10 }] }
+        ];
+        const svg = createLineChart(div, series);
+        assert(svg !== null, 'Test 3: SVG created with single point');
+        const path = svg.querySelector('path[data-series-name="Single"]');
+        assert(path !== null, 'Test 3: Path created for single point series');
+        assert(path.getAttribute('stroke') === '#00ff88', 'Test 3: Path color matches series color');
+        assert(path.getAttribute('fill') === 'none', 'Test 3: Path has no fill');
+        // Single point should have only M command, no L
+        const d = path.getAttribute('d');
+        assert(d.includes('M') && !d.includes('L'), 'Test 3: Single point has M but no L commands');
+      }
+
+      // Test 4: Single series with multiple points
+      {
+        const div = document.createElement('div');
+        const series = [
+          {
+            name: 'Linear',
+            color: '#ff6666',
+            points: [
+              { x: 0, y: 0 },
+              { x: 1, y: 1 },
+              { x: 2, y: 2 },
+              { x: 3, y: 3 }
+            ]
+          }
+        ];
+        const svg = createLineChart(div, series);
+        const path = svg.querySelector('path[data-series-name="Linear"]');
+        assert(path !== null, 'Test 4: Path created for multi-point series');
+        assert(path.getAttribute('fill') === 'none', 'Test 4: Path has no fill');
+        assert(path.getAttribute('stroke-width') === '2', 'Test 4: Path has correct stroke width');
+        const d = path.getAttribute('d');
+        assert(d.includes('M') && d.includes('L'), 'Test 4: Path has both M and L commands');
+      }
+
+      // Test 5: Multiple series
+      {
+        const div = document.createElement('div');
+        const series = [
+          {
+            name: 'Series A',
+            color: '#ff0000',
+            points: [{ x: 0, y: 0 }, { x: 1, y: 2 }]
+          },
+          {
+            name: 'Series B',
+            color: '#00ff00',
+            points: [{ x: 0, y: 1 }, { x: 1, y: 1 }]
+          },
+          {
+            name: 'Series C',
+            color: '#0000ff',
+            points: [{ x: 0, y: 2 }, { x: 1, y: 0 }]
+          }
+        ];
+        const svg = createLineChart(div, series);
+        const paths = svg.querySelectorAll('path[data-series-name]');
+        assert(paths.length === 3, 'Test 5: Three paths created for three series');
+        assert(svg.querySelector('path[data-series-name="Series A"]').getAttribute('stroke') === '#ff0000', 'Test 5: Series A color correct');
+        assert(svg.querySelector('path[data-series-name="Series B"]').getAttribute('stroke') === '#00ff00', 'Test 5: Series B color correct');
+        assert(svg.querySelector('path[data-series-name="Series C"]').getAttribute('stroke') === '#0000ff', 'Test 5: Series C color correct');
+      }
+
+      // Test 6: All points at same x value
+      {
+        const div = document.createElement('div');
+        const series = [
+          {
+            name: 'Same X',
+            color: '#ffff00',
+            points: [{ x: 5, y: 0 }, { x: 5, y: 5 }, { x: 5, y: 10 }]
+          }
+        ];
+        const svg = createLineChart(div, series);
+        const path = svg.querySelector('path[data-series-name="Same X"]');
+        assert(path !== null, 'Test 6: Path created when all points have same x');
+        const d = path.getAttribute('d');
+        assert(d && d.includes('M') && d.includes('L'), 'Test 6: Path data contains move and line commands');
+        assert(!d.includes('NaN') && !d.includes('Infinity'), 'Test 6: No NaN or Infinity in path data');
+      }
+
+      // Test 7: All points at same y value
+      {
+        const div = document.createElement('div');
+        const series = [
+          {
+            name: 'Same Y',
+            color: '#ff00ff',
+            points: [{ x: 0, y: 7 }, { x: 5, y: 7 }, { x: 10, y: 7 }]
+          }
+        ];
+        const svg = createLineChart(div, series);
+        const path = svg.querySelector('path[data-series-name="Same Y"]');
+        assert(path !== null, 'Test 7: Path created when all points have same y');
+        const d = path.getAttribute('d');
+        assert(!d.includes('NaN') && !d.includes('Infinity'), 'Test 7: No NaN or Infinity in path data');
+      }
+
+      // Test 8: Series with empty points array
+      {
+        const div = document.createElement('div');
+        const series = [
+          { name: 'Empty', color: '#00ffff', points: [] },
+          { name: 'Valid', color: '#ff0000', points: [{ x: 0, y: 0 }, { x: 1, y: 1 }] }
+        ];
+        const svg = createLineChart(div, series);
+        assert(svg.querySelector('path[data-series-name="Empty"]') === null, 'Test 8: No path for series with empty points');
+        assert(svg.querySelector('path[data-series-name="Valid"]') !== null, 'Test 8: Path created for valid series');
+      }
+
+      // Test 9: All series have empty points
+      {
+        const div = document.createElement('div');
+        const series = [
+          { name: 'Empty1', color: '#ff0000', points: [] },
+          { name: 'Empty2', color: '#00ff00', points: [] }
+        ];
+        const svg = createLineChart(div, series);
+        assert(svg !== null, 'Test 9: SVG created even with all empty series');
+        assert(svg.querySelectorAll('path[data-series-name]').length === 0, 'Test 9: No paths for all-empty series');
+      }
+
+      // Test 10: Axes scale to encompass all series data
+      {
+        const div = document.createElement('div');
+        const series = [
+          { name: 'A', color: '#ff0000', points: [{ x: 0, y: 0 }, { x: 1, y: 1 }] },
+          { name: 'B', color: '#00ff00', points: [{ x: 5, y: 10 }, { x: 10, y: 20 }] }
+        ];
+        const svg = createLineChart(div, series);
+        const pathA = svg.querySelector('path[data-series-name="A"]');
+        const pathB = svg.querySelector('path[data-series-name="B"]');
+        assert(pathA !== null && pathB !== null, 'Test 10: Both series rendered');
+
+        // Verify both paths have valid coordinate data
+        const dA = pathA.getAttribute('d');
+        const dB = pathB.getAttribute('d');
+        assert(dA.includes('M') && !dA.includes('NaN'), 'Test 10: Series A has valid path data');
+        assert(dB.includes('M') && !dB.includes('NaN'), 'Test 10: Series B has valid path data');
+
+        // Parse coordinates from paths to verify scaling
+        const coordsA = dA.match(/[\d.]+/g).map(Number);
+        const coordsB = dB.match(/[\d.]+/g).map(Number);
+
+        // All coordinates should be finite
+        assert(coordsA.every(isFinite), 'Test 10: All Series A coordinates are finite');
+        assert(coordsB.every(isFinite), 'Test 10: All Series B coordinates are finite');
+      }
+
+      // Test 11: Custom axis labels
+      {
+        const div = document.createElement('div');
+        const series = [
+          { name: 'Test', color: '#00ff88', points: [{ x: 0, y: 0 }, { x: 1, y: 1 }] }
+        ];
+        const svg = createLineChart(div, series, {
+          xLabel: 'Time (s)',
+          yLabel: 'Value'
+        });
+        const texts = Array.from(svg.querySelectorAll('text'));
+        const xLabelFound = texts.some(t => t.textContent === 'Time (s)');
+        const yLabelFound = texts.some(t => t.textContent === 'Value');
+        assert(xLabelFound, 'Test 11: Custom X-axis label rendered');
+        assert(yLabelFound, 'Test 11: Custom Y-axis label rendered');
+      }
+
+      // Test 12: Negative values
+      {
+        const div = document.createElement('div');
+        const series = [
+          {
+            name: 'Negative',
+            color: '#ff00ff',
+            points: [{ x: -5, y: -10 }, { x: 0, y: 0 }, { x: 5, y: 10 }]
+          }
+        ];
+        const svg = createLineChart(div, series);
+        const path = svg.querySelector('path[data-series-name="Negative"]');
+        assert(path !== null, 'Test 12: Path created with negative values');
+        const d = path.getAttribute('d');
+        assert(!d.includes('NaN') && !d.includes('Infinity'), 'Test 12: No NaN or Infinity with negative values');
+      }
+
+      // Test 13: Large range (verify no overflow/underflow)
+      {
+        const div = document.createElement('div');
+        const series = [
+          {
+            name: 'Large',
+            color: '#00ffff',
+            points: [{ x: 0, y: 0 }, { x: 1000000, y: 1000000 }]
+          }
+        ];
+        const svg = createLineChart(div, series);
+        const path = svg.querySelector('path[data-series-name="Large"]');
+        assert(path !== null, 'Test 13: Path created with large values');
+        const d = path.getAttribute('d');
+        assert(!d.includes('NaN') && !d.includes('Infinity'), 'Test 13: No NaN or Infinity with large values');
+      }
+
+      // Test 14: Visual rendering test
+      {
+        testContainer.innerHTML = '<h3>Visual Test: Multiple Series Line Chart</h3>';
+        const div = document.createElement('div');
+        div.style.background = '#1a1a1a';
+        div.style.padding = '20px';
+        div.style.borderRadius = '8px';
+
+        const series = [
+          {
+            name: 'Sine',
+            color: '#ff6666',
+            points: Array.from({ length: 50 }, (_, i) => ({
+              x: i,
+              y: Math.sin(i / 5) * 10
+            }))
+          },
+          {
+            name: 'Cosine',
+            color: '#6666ff',
+            points: Array.from({ length: 50 }, (_, i) => ({
+              x: i,
+              y: Math.cos(i / 5) * 10
+            }))
+          },
+          {
+            name: 'Linear',
+            color: '#00ff88',
+            points: Array.from({ length: 50 }, (_, i) => ({
+              x: i,
+              y: i / 5
+            }))
+          }
+        ];
+
+        const svg = createLineChart(div, series, {
+          width: 800,
+          height: 500,
+          xLabel: 'Time',
+          yLabel: 'Amplitude'
+        });
+
+        testContainer.appendChild(div);
+
+        assert(svg !== null, 'Test 14: Visual test chart rendered');
+        assert(svg.querySelectorAll('path[data-series-name]').length === 3, 'Test 14: All three series visible');
+      }
+
+      updateSummary();
+    });
+  </script>
+</body>
+</html>
