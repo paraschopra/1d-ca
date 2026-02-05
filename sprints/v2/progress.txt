@@ -295,3 +295,36 @@ Implemented async precomputation of all 256 rule metrics:
    - Wolfram class assignments, numeric validity
 
 Next: Task 14 - Dropdown selectors for X/Y axis metric choice
+
+## 2026-02-05 - Rule Space Map: Dropdowns + Scatter Plot + Class Colors (Tasks 14-16) - COMPLETE
+
+Implemented full Rule Space Map visualization:
+
+1. Task 14 - Dropdown selectors:
+   - X/Y axis metric dropdowns with 6 numeric metrics
+   - Defaults: X=entropy, Y=lyapunov
+   - Period metric excluded (non-numeric)
+   - Change triggers re-render with new metric pair
+
+2. Task 15 - Scatter plot rendering:
+   - All 256 rules rendered as dots
+   - Positions from precomputedMetrics array
+   - Auto-scaled axes with metric-aware labels
+   - Re-renders on dropdown change
+
+3. Task 16 - Wolfram class color coding:
+   - Class I = green (#4caf50), II = blue (#42a5f5)
+   - Class III = red (#ef5350), IV = orange (#ffa726)
+   - Colors match existing .class-I through .class-IV CSS
+   - Class legend below chart with all 4 classes
+
+4. Click integration:
+   - Clicking any dot opens rule detail modal
+   - Tooltip on hover shows rule number + metric values
+
+5. Tests: 14/14 passing (tests/rule-map-playwright.js)
+   - Dropdown existence, defaults, metric list
+   - 256 dots, correct positions, axis labels
+   - Color coding, legend, dropdown re-render
+
+Next: Task 17 - Hover tooltip on scatter dots (already partially done via charting engine tooltip)

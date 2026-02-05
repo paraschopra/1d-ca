@@ -484,6 +484,31 @@
                 Select X and Y axis metrics to explore the rule space structure. Click any dot to view detailed rule information.
             </p>
         </div>
+        <div id="rule-map-controls" style="display: flex; gap: 20px; padding: 10px 20px; align-items: center; justify-content: center;">
+            <label style="color: #00ff88; font-family: monospace;">
+                X Axis:
+                <select id="xAxisMetric" style="background: #333; color: #eee; border: 1px solid #666; padding: 4px 8px; font-family: monospace; margin-left: 5px;">
+                    <option value="entropy" selected>Entropy</option>
+                    <option value="density">Density</option>
+                    <option value="meanField">Mean Field</option>
+                    <option value="symmetry">Symmetry</option>
+                    <option value="lyapunov">Lyapunov</option>
+                    <option value="compressibility">Compressibility</option>
+                </select>
+            </label>
+            <label style="color: #00ff88; font-family: monospace;">
+                Y Axis:
+                <select id="yAxisMetric" style="background: #333; color: #eee; border: 1px solid #666; padding: 4px 8px; font-family: monospace; margin-left: 5px;">
+                    <option value="entropy">Entropy</option>
+                    <option value="density">Density</option>
+                    <option value="meanField">Mean Field</option>
+                    <option value="symmetry">Symmetry</option>
+                    <option value="lyapunov" selected>Lyapunov</option>
+                    <option value="compressibility">Compressibility</option>
+                </select>
+            </label>
+        </div>
+        <div id="rule-map-chart" style="text-align: center; padding: 10px;"></div>
     </div>
 
     <!-- Phase Explorer Panel -->
@@ -1792,27 +1817,82 @@
             window.dispatchEvent(new CustomEvent('metricsReady', { detail: metrics }));
         });
 
-        // Demo scatter plot in Rule Map panel (will be replaced with actual implementation)
-        const mapPanel = document.getElementById('panel-map');
-        const demoContainer = document.createElement('div');
-        demoContainer.style.padding = '20px';
-        demoContainer.style.textAlign = 'center';
-        mapPanel.querySelector('.placeholder').after(demoContainer);
+        // Rule Space Map — render scatter plot from precomputed metrics
+        const CLASS_COLORS = {
+            'I': '#4caf50',   // Green
+            'II': '#42a5f5',  // Blue
+            'III': '#ef5350', // Red
+            'IV': '#ffa726'   // Orange
+        };
 
-        const demoData = [
-            { x: 0.2, y: 0.5, label: 'Rule 30', color: '#ef5350' },
-            { x: 0.5, y: 0.8, label: 'Rule 110', color: '#ffa726' },
-            { x: 0.8, y: 0.3, label: 'Rule 90', color: '#42a5f5' },
-            { x: 0.4, y: 0.6, label: 'Rule 150', color: '#4caf50' },
-            { x: 0.7, y: 0.9, label: 'Rule 22', color: '#ef5350' }
-        ];
+        const METRIC_LABELS = {
+            entropy: 'Entropy',
+            density: 'Density',
+            meanField: 'Mean Field',
+            symmetry: 'Symmetry',
+            lyapunov: 'Lyapunov',
+            compressibility: 'Compressibility'
+        };
 
-        createScatterPlot(demoContainer, demoData, {
-            width: 600,
-            height: 400,
-            xLabel: 'Entropy (demo)',
-            yLabel: 'Lyapunov Exponent (demo)'
-        });
+        function renderRuleMap() {
+            if (!precomputedMetrics) return;
+
+            const xMetric = document.getElementById('xAxisMetric').value;
+            const yMetric = document.getElementById('yAxisMetric').value;
+            const chartContainer = document.getElementById('rule-map-chart');
+
+            const data = precomputedMetrics.map(m => ({
+                x: m[xMetric],
+                y: m[yMetric],
+                label: `Rule ${m.rule}`,
+                color: CLASS_COLORS[m.wolframClass] || '#888',
+                rule: m.rule,
+                wolframClass: m.wolframClass
+            }));
+
+            createScatterPlot(chartContainer, data, {
+                width: 800,
+                height: 500,
+                margins: { top: 20, right: 20, bottom: 50, left: 60 },
+                xLabel: METRIC_LABELS[xMetric] || xMetric,
+                yLabel: METRIC_LABELS[yMetric] || yMetric
+            });
+
+            // Add Wolfram class legend below the chart
+            let legendDiv = chartContainer.querySelector('.class-legend');
+            if (!legendDiv) {
+                legendDiv = document.createElement('div');
+                legendDiv.className = 'class-legend';
+                legendDiv.style.display = 'flex';
+                legendDiv.style.gap = '20px';
+                legendDiv.style.justifyContent = 'center';
+                legendDiv.style.padding = '10px';
+                legendDiv.style.fontFamily = 'monospace';
+                legendDiv.style.fontSize = '13px';
+                chartContainer.appendChild(legendDiv);
+            }
+            legendDiv.innerHTML = Object.entries(CLASS_COLORS).map(([cls, color]) =>
+                `<span style="color: ${color};">&#9679; Class ${cls}</span>`
+            ).join('');
+
+            // Wire click events on scatter dots to open modal
+            const svg = chartContainer.querySelector('svg');
+            if (svg) {
+                svg.querySelectorAll('circle[data-label]').forEach((circle, i) => {
+                    circle.addEventListener('click', () => {
+                        const ruleNum = data[i].rule;
+                        openModal(ruleNum);
+                    });
+                });
+            }
+        }
+
+        // Render when metrics are ready
+        window.addEventListener('metricsReady', renderRuleMap);
+
+        // Re-render when dropdowns change
+        document.getElementById('xAxisMetric').addEventListener('change', renderRuleMap);
+        document.getElementById('yAxisMetric').addEventListener('change', renderRuleMap);
 
         // Demo line chart for Phase Explorer
         const phaseChartContainer = document.getElementById('phase-demo-chart');

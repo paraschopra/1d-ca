@@ -166,7 +166,7 @@
       "Changing either dropdown triggers a re-render of the scatter plot",
       "The 'period' metric is excluded or handled specially since it can be 'aperiodic' (non-numeric)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Rule Space Map",
@@ -179,7 +179,7 @@
       "The plot auto-scales axes to the actual data range with some padding",
       "Axis labels update to reflect the selected metric names"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Rule Space Map",
@@ -192,7 +192,7 @@
       "A legend showing all 4 classes with their colors is visible on the plot",
       "Colors match the existing class color scheme from the card view (.class-I through .class-IV)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Rule Space Map",
