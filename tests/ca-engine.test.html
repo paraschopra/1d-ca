@@ -116,6 +116,37 @@
             return nextRow;
         }
 
+        /**
+         * Generate a full CA grid
+         * @param {number} ruleNumber - Rule number (0-255)
+         * @param {number} width - Grid width (number of cells per row)
+         * @param {number} generations - Number of generations to compute
+         * @param {Array<number>} initialConfig - Optional initial configuration (defaults to center cell)
+         * @returns {Array<Array<number>>} 2D grid (generations x width)
+         */
+        function generateGrid(ruleNumber, width, generations, initialConfig = null) {
+            const lookupTable = ruleToLookupTable(ruleNumber);
+            const grid = [];
+
+            // Create initial configuration if not provided
+            if (!initialConfig) {
+                initialConfig = new Array(width).fill(0);
+                initialConfig[Math.floor(width / 2)] = 1;
+            }
+
+            // First generation is the initial config
+            grid.push([...initialConfig]);
+
+            // Generate remaining generations
+            for (let gen = 1; gen < generations; gen++) {
+                const prevRow = grid[gen - 1];
+                const nextRow = evolveRow(prevRow, lookupTable);
+                grid.push(nextRow);
+            }
+
+            return grid;
+        }
+
         // ============================================
         // TESTS FOR TASK 1: Rule-to-Lookup-Table
         // ============================================
@@ -196,9 +227,56 @@
                 'Output row length matches input row length');
         }
 
+        // ============================================
+        // TESTS FOR TASK 3: Full Grid Generation
+        // ============================================
+
+        function testGenerateGrid() {
+            console.log('\n=== Testing Full Grid Generation ===\n');
+
+            // Test 1: Grid dimensions for Rule 30
+            const grid30 = generateGrid(30, 128, 128);
+            assertEquals(grid30.length, 128, 'Grid has 128 rows');
+            assertEquals(grid30[0].length, 128, 'Grid has 128 columns');
+
+            // Test 2: First row is initial configuration (single center cell)
+            const expectedFirstRow = new Array(128).fill(0);
+            expectedFirstRow[64] = 1;
+            assertEquals(grid30[0], expectedFirstRow, 'First row is single center cell');
+
+            // Test 3: Second row matches expected Rule 30 evolution
+            const rule30 = ruleToLookupTable(30);
+            const expectedSecondRow = evolveRow(grid30[0], rule30);
+            assertEquals(grid30[1], expectedSecondRow, 'Second row matches Rule 30 evolution');
+
+            // Test 4: Rule 0 stays all zeros
+            const grid0 = generateGrid(0, 10, 10);
+            const allZeros = new Array(10).fill(0);
+            allZeros[5] = 1; // Initial config has center cell
+            assertEquals(grid0[0], allZeros, 'Rule 0 first row has center cell');
+            // After one generation, should stay all zeros (since 000->0)
+            const secondRowZeros = new Array(10).fill(0);
+            secondRowZeros[5] = 0; // Even center should die
+            // Actually Rule 0 means all neighborhoods map to 0, so after gen 1 everything is 0
+            assert(grid0[1].every(cell => cell === 0), 'Rule 0 generation 1 is all zeros');
+
+            // Test 5: Rule 255 expands from center
+            const grid255 = generateGrid(255, 10, 3);
+            assert(grid255[0][5] === 1, 'Rule 255 starts with center cell');
+            // Rule 255: all neighborhoods -> 1, so everything becomes 1
+            assert(grid255[1].every(cell => cell === 1), 'Rule 255 generation 1 is all ones');
+            assert(grid255[2].every(cell => cell === 1), 'Rule 255 generation 2 is all ones');
+
+            // Test 6: Custom initial configuration
+            const customInit = [1, 0, 1, 0, 1];
+            const gridCustom = generateGrid(30, 5, 3, customInit);
+            assertEquals(gridCustom[0], customInit, 'Grid uses custom initial configuration');
+        }
+
         // Run all tests
         testRuleToLookupTable();
         testEvolveRow();
+        testGenerateGrid();
         showSummary();
     </script>
 </body>

@@ -33,7 +33,7 @@
       "Generate grids for Rule 0 and Rule 255 and confirm expected trivial behavior (all-0 stays all-0 for Rule 0; single cell expands for Rule 255)",
       "Verify the function accepts and correctly uses a custom initial configuration (random array of 0s and 1s)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Core CA Engine",
