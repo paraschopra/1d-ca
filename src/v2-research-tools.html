@@ -538,6 +538,7 @@
         // Global state
         let currentMode = 'center';
         let currentDensity = 0.5;
+        let precomputedMetrics = null; // Array of 256 objects, populated async after first paint
 
         // CA Engine (from v1)
         function ruleToLookupTable(ruleNumber) {
@@ -1753,6 +1754,43 @@
         if (window.location.hash.slice(1) === 'grid' || !window.location.hash) {
             renderAllRules();
         }
+
+        // Precompute metrics for all 256 rules (async, non-blocking)
+        function precomputeAllRuleMetrics() {
+            return new Promise((resolve) => {
+                precomputedMetrics = new Array(256);
+                let ruleIndex = 0;
+                const PRECOMPUTE_CHUNK = 8;
+
+                function computeChunk() {
+                    const endIndex = Math.min(ruleIndex + PRECOMPUTE_CHUNK, 256);
+                    for (let i = ruleIndex; i < endIndex; i++) {
+                        const initialConfig = generateCenterCell(GRID_SIZE);
+                        const grid = generateGrid(i, GRID_SIZE, GENERATIONS, initialConfig);
+                        const metrics = computeAllMetrics(i, grid, initialConfig);
+                        precomputedMetrics[i] = {
+                            rule: i,
+                            ...metrics
+                        };
+                    }
+                    ruleIndex = endIndex;
+                    if (ruleIndex < 256) {
+                        requestAnimationFrame(computeChunk);
+                    } else {
+                        resolve(precomputedMetrics);
+                    }
+                }
+
+                requestAnimationFrame(computeChunk);
+            });
+        }
+
+        // Start precomputation after first paint
+        precomputeAllRuleMetrics().then(metrics => {
+            console.log('Precomputed metrics for all 256 rules');
+            // Dispatch event for other components to know data is ready
+            window.dispatchEvent(new CustomEvent('metricsReady', { detail: metrics }));
+        });
 
         // Demo scatter plot in Rule Map panel (will be replaced with actual implementation)
         const mapPanel = document.getElementById('panel-map');

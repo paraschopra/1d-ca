@@ -154,7 +154,7 @@
       "The precomputed array is accessible from the Rule Map tab's rendering code",
       "Precomputation does not block the initial page render (runs async or after first paint)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Rule Space Map",

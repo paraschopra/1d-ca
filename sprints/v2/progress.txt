@@ -270,3 +270,28 @@ Implemented tooltip system for scatter plot and line chart:
    - Visual hover screenshots verified for both chart types
 
 Next: Custom Charting Engine COMPLETE. Begin Rule Space Map features (Tasks 13-18)
+
+## 2026-02-05 - Rule Space Map: Precompute Metrics (Task 13) - COMPLETE
+
+Implemented async precomputation of all 256 rule metrics:
+
+1. precomputeAllRuleMetrics() function:
+   - Computes metrics for all 256 rules using center-cell initial config
+   - Async chunked with requestAnimationFrame (8 rules per chunk)
+   - Does not block initial page render
+   - Stores in global precomputedMetrics array
+
+2. Each entry contains:
+   - rule (number), entropy, density, meanField, symmetry
+   - lyapunov, compressibility, period, wolframClass
+
+3. Event-driven:
+   - Dispatches 'metricsReady' CustomEvent when complete
+   - Other components can listen to know when data is available
+
+4. Tests: 9/9 passing (tests/precompute-metrics-playwright.js)
+   - Array size, all fields present, deterministic values
+   - Known rule behaviors validated (Rule 0 vs Rule 30)
+   - Wolfram class assignments, numeric validity
+
+Next: Task 14 - Dropdown selectors for X/Y axis metric choice
