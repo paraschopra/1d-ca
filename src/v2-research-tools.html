@@ -732,6 +732,77 @@
         }
 
         // Charting Engine - Scatter Plot
+        // Charting Engine - SVG Tooltip Helper
+        function addSvgTooltip(svg, width, height) {
+            // Create tooltip group (hidden by default)
+            const tooltipGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            tooltipGroup.setAttribute('class', 'chart-tooltip');
+            tooltipGroup.style.display = 'none';
+            tooltipGroup.style.pointerEvents = 'none';
+
+            const tooltipBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            tooltipBg.setAttribute('fill', '#222');
+            tooltipBg.setAttribute('stroke', '#00ff88');
+            tooltipBg.setAttribute('stroke-width', '1');
+            tooltipBg.setAttribute('rx', '4');
+            tooltipBg.setAttribute('ry', '4');
+            tooltipGroup.appendChild(tooltipBg);
+
+            const tooltipText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            tooltipText.setAttribute('fill', '#eee');
+            tooltipText.setAttribute('font-size', '12');
+            tooltipText.setAttribute('font-family', 'monospace');
+            tooltipGroup.appendChild(tooltipText);
+
+            svg.appendChild(tooltipGroup);
+
+            return {
+                show(x, y, lines) {
+                    tooltipGroup.style.display = '';
+
+                    // Clear previous text
+                    while (tooltipText.firstChild) tooltipText.removeChild(tooltipText.firstChild);
+
+                    // Add text lines
+                    lines.forEach((line, i) => {
+                        const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+                        tspan.setAttribute('x', '0');
+                        tspan.setAttribute('dy', i === 0 ? '0' : '16');
+                        tspan.textContent = line;
+                        tooltipText.appendChild(tspan);
+                    });
+
+                    // Calculate tooltip size
+                    const padding = 8;
+                    const lineHeight = 16;
+                    const maxChars = Math.max(...lines.map(l => l.length));
+                    const textWidth = maxChars * 7.5; // approx monospace char width
+                    const textHeight = lines.length * lineHeight;
+
+                    tooltipBg.setAttribute('width', textWidth + padding * 2);
+                    tooltipBg.setAttribute('height', textHeight + padding * 2 - 4);
+
+                    // Position tooltip (offset from cursor, keep within bounds)
+                    let tx = x + 12;
+                    let ty = y - textHeight - 12;
+
+                    // Clamp to SVG bounds
+                    if (tx + textWidth + padding * 2 > width) tx = x - textWidth - padding * 2 - 12;
+                    if (ty < 0) ty = y + 12;
+
+                    tooltipBg.setAttribute('x', -padding);
+                    tooltipBg.setAttribute('y', -padding - 2);
+                    tooltipText.setAttribute('x', '0');
+                    tooltipText.setAttribute('y', lineHeight - 4);
+
+                    tooltipGroup.setAttribute('transform', `translate(${tx}, ${ty})`);
+                },
+                hide() {
+                    tooltipGroup.style.display = 'none';
+                }
+            };
+        }
+
         function createScatterPlot(container, data, config = {}) {
             const width = config.width || 600;
             const height = config.height || 400;
@@ -921,9 +992,30 @@
                 circle.setAttribute('data-label', point.label || '');
                 circle.setAttribute('data-x', point.x);
                 circle.setAttribute('data-y', point.y);
+                circle.style.cursor = 'pointer';
                 pointsGroup.appendChild(circle);
             });
             svg.appendChild(pointsGroup);
+
+            // Add tooltip
+            const tooltip = addSvgTooltip(svg, width, height);
+            pointsGroup.querySelectorAll('circle').forEach(circle => {
+                circle.addEventListener('mouseenter', (e) => {
+                    const label = circle.getAttribute('data-label');
+                    const x = parseFloat(circle.getAttribute('data-x'));
+                    const y = parseFloat(circle.getAttribute('data-y'));
+                    const lines = [];
+                    if (label) lines.push(label);
+                    lines.push(`${xLabel}: ${x.toFixed(4)}`);
+                    lines.push(`${yLabel}: ${y.toFixed(4)}`);
+                    tooltip.show(parseFloat(circle.getAttribute('cx')), parseFloat(circle.getAttribute('cy')), lines);
+                    circle.setAttribute('r', 6); // Highlight
+                });
+                circle.addEventListener('mouseleave', () => {
+                    tooltip.hide();
+                    circle.setAttribute('r', 4);
+                });
+            });
 
             return svg;
         }
@@ -1165,6 +1257,56 @@
             });
 
             svg.appendChild(linesGroup);
+
+            // Add invisible hover circles for tooltip interaction
+            const hoverGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            hoverGroup.setAttribute('class', 'line-hover-points');
+
+            series.forEach(s => {
+                if (!s.points || s.points.length === 0) return;
+                const color = s.color || '#00ff88';
+                const name = s.name || 'Series';
+
+                s.points.forEach(p => {
+                    const x = xScale(p.x);
+                    const y = yScale(p.y);
+                    if (!isFinite(x) || !isFinite(y)) return;
+
+                    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    circle.setAttribute('cx', x);
+                    circle.setAttribute('cy', y);
+                    circle.setAttribute('r', 6);
+                    circle.setAttribute('fill', 'transparent');
+                    circle.setAttribute('data-series-name', name);
+                    circle.setAttribute('data-x', p.x);
+                    circle.setAttribute('data-y', p.y);
+                    circle.setAttribute('data-color', color);
+                    circle.style.cursor = 'pointer';
+                    hoverGroup.appendChild(circle);
+                });
+            });
+
+            svg.appendChild(hoverGroup);
+
+            // Add tooltip for line chart
+            const lineTooltip = addSvgTooltip(svg, width, height);
+            hoverGroup.querySelectorAll('circle').forEach(circle => {
+                circle.addEventListener('mouseenter', () => {
+                    const name = circle.getAttribute('data-series-name');
+                    const x = parseFloat(circle.getAttribute('data-x'));
+                    const y = parseFloat(circle.getAttribute('data-y'));
+                    const color = circle.getAttribute('data-color');
+                    const lines = [name, `${xLabel}: ${x.toFixed(4)}`, `${yLabel}: ${y.toFixed(4)}`];
+                    lineTooltip.show(parseFloat(circle.getAttribute('cx')), parseFloat(circle.getAttribute('cy')), lines);
+                    circle.setAttribute('fill', color);
+                    circle.setAttribute('r', 5);
+                });
+                circle.addEventListener('mouseleave', () => {
+                    lineTooltip.hide();
+                    circle.setAttribute('fill', 'transparent');
+                    circle.setAttribute('r', 6);
+                });
+            });
 
             // Draw legend
             const legendGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');

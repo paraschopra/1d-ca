@@ -242,3 +242,31 @@ Implemented color scale bar legend for heatmaps:
    - Custom min/max values
 
 Next: Task 12 - Hover tooltip system for scatter and line charts
+
+## 2026-02-05 - Custom Charting Engine: Hover Tooltips (Task 12) - COMPLETE
+
+Implemented tooltip system for scatter plot and line chart:
+
+1. Shared addSvgTooltip() helper:
+   - Creates SVG tooltip group with dark bg (#222) and green border (#00ff88)
+   - Multi-line text support via tspan elements
+   - Auto-positioning: offset from cursor, clamped to SVG bounds
+   - show(x, y, lines) / hide() API
+
+2. Scatter plot tooltips:
+   - Hover over circle → shows label + x/y values with axis labels
+   - Circle enlarges on hover (r=4 → r=6) for visual feedback
+   - Cursor changes to pointer
+
+3. Line chart tooltips:
+   - Invisible hover circles at each data point (r=6, transparent fill)
+   - Hover → shows series name + x/y values
+   - Circle becomes visible in series color on hover
+   - Works across all series
+
+4. Tests: 12/12 passing (tests/tooltip-playwright.js)
+   - Function existence, tooltip groups, data attributes
+   - Styling, visibility, show/hide API
+   - Visual hover screenshots verified for both chart types
+
+Next: Custom Charting Engine COMPLETE. Begin Rule Space Map features (Tasks 13-18)

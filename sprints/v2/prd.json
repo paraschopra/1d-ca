@@ -142,7 +142,7 @@
       "Tooltip disappears when the mouse moves away from the data point",
       "Tooltip text is readable (light text on dark background, matching app theme)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Rule Space Map",
