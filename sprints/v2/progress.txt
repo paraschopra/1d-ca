@@ -218,3 +218,27 @@ Implemented Canvas heatmap renderer for visualizing 2D numeric matrices:
    - Visual test: light cone pattern rendered and screenshot verified
 
 Next: Task 11 - Color scale bar legend for heatmap
+
+## 2026-02-05 - Custom Charting Engine: Color Scale Bar (Task 11) - COMPLETE
+
+Implemented color scale bar legend for heatmaps:
+
+1. createColorScaleBar() function:
+   - Vertical gradient bar using Canvas
+   - Configurable barWidth, barHeight, colors, min/max values
+   - Same three-point gradient as createHeatmap (black→cyan→white default)
+   - Top = max value, bottom = min value
+
+2. Labels:
+   - Max value label at top
+   - Min value label at bottom
+   - Midpoint tick label with dash indicator
+   - Optional title label (e.g., "Difference")
+   - All values formatted to 2 decimal places
+
+3. Tests: 10/10 passing (tests/color-scale-bar-playwright.js)
+   - Function existence, wrapper creation, canvas dimensions
+   - Label values, gradient variation, color correctness
+   - Custom min/max values
+
+Next: Task 12 - Hover tooltip system for scatter and line charts

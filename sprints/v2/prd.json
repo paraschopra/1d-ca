@@ -130,7 +130,7 @@
       "At least one intermediate tick value is shown",
       "The scale bar matches the actual gradient used in the heatmap"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Custom Charting Engine",

@@ -1294,6 +1294,107 @@
             ctx.putImageData(imageData, 0, 0);
         }
 
+        // Charting Engine - Heatmap Color Scale Bar
+        function createColorScaleBar(container, config = {}) {
+            const barWidth = config.barWidth || 20;
+            const barHeight = config.barHeight || 200;
+            const colorMin = config.colorMin || [0, 0, 0];
+            const colorMid = config.colorMid || [0, 255, 255];
+            const colorMax = config.colorMax || [255, 255, 255];
+            const minValue = config.minValue !== undefined ? config.minValue : 0;
+            const maxValue = config.maxValue !== undefined ? config.maxValue : 1;
+            const label = config.label || '';
+
+            // Create wrapper div
+            const wrapper = document.createElement('div');
+            wrapper.className = 'color-scale-bar';
+            wrapper.style.display = 'inline-flex';
+            wrapper.style.flexDirection = 'column';
+            wrapper.style.alignItems = 'center';
+            wrapper.style.gap = '4px';
+
+            // Label at top
+            if (label) {
+                const labelEl = document.createElement('div');
+                labelEl.style.color = '#00ff88';
+                labelEl.style.fontSize = '12px';
+                labelEl.style.fontFamily = 'monospace';
+                labelEl.textContent = label;
+                wrapper.appendChild(labelEl);
+            }
+
+            // Max value label
+            const maxLabel = document.createElement('div');
+            maxLabel.className = 'scale-max-label';
+            maxLabel.style.color = '#ccc';
+            maxLabel.style.fontSize = '11px';
+            maxLabel.style.fontFamily = 'monospace';
+            maxLabel.textContent = maxValue.toFixed(2);
+            wrapper.appendChild(maxLabel);
+
+            // Canvas for gradient bar
+            const canvas = document.createElement('canvas');
+            canvas.className = 'scale-bar-canvas';
+            canvas.width = barWidth;
+            canvas.height = barHeight;
+            canvas.style.border = '1px solid #666';
+
+            const ctx = canvas.getContext('2d');
+
+            // Draw vertical gradient (top = max, bottom = min)
+            for (let y = 0; y < barHeight; y++) {
+                const normalized = 1 - (y / (barHeight - 1)); // 1 at top, 0 at bottom
+                let color;
+                if (normalized < 0.5) {
+                    const t = normalized * 2;
+                    color = [
+                        Math.round(colorMin[0] + (colorMid[0] - colorMin[0]) * t),
+                        Math.round(colorMin[1] + (colorMid[1] - colorMin[1]) * t),
+                        Math.round(colorMin[2] + (colorMid[2] - colorMin[2]) * t)
+                    ];
+                } else {
+                    const t = (normalized - 0.5) * 2;
+                    color = [
+                        Math.round(colorMid[0] + (colorMax[0] - colorMid[0]) * t),
+                        Math.round(colorMid[1] + (colorMax[1] - colorMid[1]) * t),
+                        Math.round(colorMid[2] + (colorMax[2] - colorMid[2]) * t)
+                    ];
+                }
+
+                ctx.fillStyle = `rgb(${color[0]},${color[1]},${color[2]})`;
+                ctx.fillRect(0, y, barWidth, 1);
+            }
+
+            wrapper.appendChild(canvas);
+
+            // Mid-point tick label
+            const midValue = (minValue + maxValue) / 2;
+            const midLabel = document.createElement('div');
+            midLabel.className = 'scale-mid-label';
+            midLabel.style.color = '#aaa';
+            midLabel.style.fontSize = '10px';
+            midLabel.style.fontFamily = 'monospace';
+            midLabel.style.marginTop = `-${Math.round(barHeight / 2 + 8)}px`;
+            midLabel.style.marginBottom = `${Math.round(barHeight / 2 - 8)}px`;
+            midLabel.style.marginLeft = `${barWidth + 8}px`;
+            midLabel.style.alignSelf = 'flex-start';
+            midLabel.textContent = `— ${midValue.toFixed(2)}`;
+            wrapper.appendChild(midLabel);
+
+            // Min value label
+            const minLabel = document.createElement('div');
+            minLabel.className = 'scale-min-label';
+            minLabel.style.color = '#ccc';
+            minLabel.style.fontSize = '11px';
+            minLabel.style.fontFamily = 'monospace';
+            minLabel.textContent = minValue.toFixed(2);
+            wrapper.appendChild(minLabel);
+
+            container.appendChild(wrapper);
+
+            return wrapper;
+        }
+
         // Rendering
         function renderToCanvas(grid, canvas) {
             const rows = grid.length;
