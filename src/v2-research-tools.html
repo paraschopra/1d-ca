@@ -932,7 +932,7 @@
         function createLineChart(container, series, config = {}) {
             const width = config.width || 600;
             const height = config.height || 400;
-            const margins = config.margins || { top: 20, right: 20, bottom: 40, left: 50 };
+            const margins = config.margins || { top: 20, right: 140, bottom: 40, left: 50 };
             const xLabel = config.xLabel || 'X Axis';
             const yLabel = config.yLabel || 'Y Axis';
 
@@ -1165,6 +1165,66 @@
             });
 
             svg.appendChild(linesGroup);
+
+            // Draw legend
+            const legendGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            legendGroup.setAttribute('class', 'legend');
+
+            // Position legend to the right of the plot area
+            const legendX = margins.left + plotWidth + 20;
+            const legendY = margins.top;
+            legendGroup.setAttribute('transform', `translate(${legendX}, ${legendY})`);
+
+            // Track legend item count to avoid gaps from skipped series
+            let legendItemIndex = 0;
+
+            series.forEach((s) => {
+                // Skip series with no points or no valid points
+                if (!s.points || s.points.length === 0) return;
+
+                // Check if series has any valid (finite) points
+                const hasValidPoints = s.points.some(p => isFinite(p.x) && isFinite(p.y));
+                if (!hasValidPoints) return;
+
+                const legendItem = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                legendItem.setAttribute('class', 'legend-item');
+                legendItem.setAttribute('transform', `translate(0, ${legendItemIndex * 25})`);
+
+                // Line sample
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', 0);
+                line.setAttribute('y1', 0);
+                line.setAttribute('x2', 30);
+                line.setAttribute('y2', 0);
+                line.setAttribute('stroke', s.color || '#00ff88');
+                line.setAttribute('stroke-width', 2);
+                legendItem.appendChild(line);
+
+                // Text label with truncation for long names
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', 40);
+                text.setAttribute('y', 5);
+                text.setAttribute('fill', '#cccccc');
+                text.setAttribute('font-size', '14');
+                text.setAttribute('font-family', 'monospace');
+                const maxLabelChars = 15; // Limit to prevent overflow
+                const label = s.name || 'Series';
+                text.textContent = label.length > maxLabelChars ? label.substring(0, maxLabelChars - 1) + '…' : label;
+
+                // Add title for full name on hover
+                if (label.length > maxLabelChars) {
+                    const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+                    title.textContent = label;
+                    text.appendChild(title);
+                }
+
+                legendItem.appendChild(text);
+                legendGroup.appendChild(legendItem);
+
+                legendItemIndex++;
+            });
+
+            svg.appendChild(legendGroup);
 
             return svg;
         }

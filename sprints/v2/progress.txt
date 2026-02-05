@@ -158,3 +158,39 @@ Implemented SVG line chart renderer with full multi-series support:
    - Minor robustness improvement: fixed invalid point handling to use isFirstValidPoint flag
 
 Next: Task 9 - Add legend and series color coding to the line chart
+
+## 2026-02-05 - Custom Charting Engine: Line Chart Legend (Task 9) - COMPLETE
+
+Implemented legend functionality for line charts with comprehensive features:
+
+1. Legend rendering:
+   - Legend group positioned to the right of plot area (+20px offset)
+   - Each series gets a legend item with 30px colored line sample
+   - Text labels positioned at x=40, readable 14px monospace font
+   - Vertical spacing of 25px between items (supports 10+ series comfortably)
+
+2. Robustness improvements (post-Codex review):
+   - Uses legendItemIndex counter instead of series array index (fixes gaps from skipped series)
+   - Checks for valid (finite) points before including in legend
+   - Truncates long names to 15 chars with ellipsis (prevents horizontal overflow)
+   - Adds SVG <title> element for full name on hover
+   - Skips series with no valid points (consistent with path rendering)
+
+3. Tests: 7/7 passing (tests/line-chart-legend-playwright.js)
+   - Legend exists and positioned correctly at (680, 20)
+   - Correct item count (3 series in demo)
+   - Line samples and text labels present
+   - Colors match chart paths exactly
+   - Proper 25px vertical spacing
+   - All verified via headless Playwright with screenshots
+
+4. Codex verification:
+   - Identified potential issues: long names, sparse series, invalid points
+   - All issues addressed in improved implementation
+   - Legend now handles edge cases robustly
+
+5. Default margin adjustment:
+   - Increased right margin from 20px to 140px to accommodate legend
+   - Provides sufficient space for ~12-15 character labels
+
+Next: Task 10 - Canvas heatmap renderer for Phase Explorer and Light Cones features

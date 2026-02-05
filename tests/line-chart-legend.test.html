@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Line Chart Legend Tests</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #00ff88;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 5px;
+        }
+        .pass { color: #00ff88; }
+        .fail { color: #ff0088; }
+        #test-container {
+            width: 800px;
+            height: 600px;
+            margin: 20px 0;
+            background: #222;
+        }
+    </style>
+</head>
+<body>
+    <h1>Line Chart Legend Tests</h1>
+    <div id="results"></div>
+    <div id="test-container"></div>
+
+    <script>
+        // Copy the createLineChart function from v2-research-tools.html
+        // This will be the version WITH legend support we're about to implement
+
+        function createLineChart(container, seriesArray, config = {}) {
+            // This is a placeholder - we'll test against the actual implementation
+            // For now, create a minimal mock to establish the test interface
+            const width = config.width || 800;
+            const height = config.height || 600;
+            const margin = config.margin || { top: 60, right: 160, bottom: 60, left: 80 };
+            const xLabel = config.xLabel || 'X Axis';
+            const yLabel = config.yLabel || 'Y Axis';
+
+            // Clear container
+            container.innerHTML = '';
+
+            // Create SVG
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('width', width);
+            svg.setAttribute('height', height);
+            svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+            svg.style.background = '#1a1a1a';
+
+            // For testing purposes, add a legend group
+            const legendGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            legendGroup.setAttribute('class', 'legend');
+            legendGroup.setAttribute('transform', `translate(${width - margin.right + 20}, ${margin.top})`);
+
+            // Add legend items for each series
+            seriesArray.forEach((series, i) => {
+                const legendItem = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                legendItem.setAttribute('class', 'legend-item');
+                legendItem.setAttribute('transform', `translate(0, ${i * 25})`);
+
+                // Line sample
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', 0);
+                line.setAttribute('y1', 0);
+                line.setAttribute('x2', 30);
+                line.setAttribute('y2', 0);
+                line.setAttribute('stroke', series.color);
+                line.setAttribute('stroke-width', 2);
+                legendItem.appendChild(line);
+
+                // Text label
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', 40);
+                text.setAttribute('y', 5);
+                text.setAttribute('fill', '#cccccc');
+                text.setAttribute('font-size', '14');
+                text.textContent = series.name;
+                legendItem.appendChild(text);
+
+                legendGroup.appendChild(legendItem);
+            });
+
+            svg.appendChild(legendGroup);
+            container.appendChild(svg);
+        }
+
+        // Test Suite
+        const results = [];
+
+        function test(name, fn) {
+            try {
+                fn();
+                results.push({ name, pass: true });
+            } catch (e) {
+                results.push({ name, pass: false, error: e.message });
+            }
+        }
+
+        // Test 1: Legend exists
+        test('Legend group exists in SVG', () => {
+            const container = document.getElementById('test-container');
+            const series = [
+                { name: 'Series A', color: '#ff0088', points: [{x: 0, y: 0}, {x: 1, y: 1}] }
+            ];
+            createLineChart(container, series);
+
+            const svg = container.querySelector('svg');
+            const legend = svg.querySelector('.legend');
+            if (!legend) throw new Error('Legend group not found');
+        });
+
+        // Test 2: Legend positioned correctly (right side)
+        test('Legend positioned on right side', () => {
+            const container = document.getElementById('test-container');
+            const series = [
+                { name: 'Series A', color: '#ff0088', points: [{x: 0, y: 0}] }
+            ];
+            createLineChart(container, series, { width: 800, margin: { top: 60, right: 160, bottom: 60, left: 80 } });
+
+            const legend = container.querySelector('.legend');
+            const transform = legend.getAttribute('transform');
+            // Should be at width - margin.right + 20 = 800 - 160 + 20 = 660
+            if (!transform.includes('660')) throw new Error(`Legend not positioned correctly: ${transform}`);
+        });
+
+        // Test 3: Correct number of legend items
+        test('Legend has correct number of items', () => {
+            const container = document.getElementById('test-container');
+            const series = [
+                { name: 'Series A', color: '#ff0088', points: [{x: 0, y: 0}] },
+                { name: 'Series B', color: '#00ff88', points: [{x: 0, y: 1}] },
+                { name: 'Series C', color: '#0088ff', points: [{x: 0, y: 2}] }
+            ];
+            createLineChart(container, series);
+
+            const legendItems = container.querySelectorAll('.legend-item');
+            if (legendItems.length !== 3) throw new Error(`Expected 3 legend items, got ${legendItems.length}`);
+        });
+
+        // Test 4: Legend items have colored line samples
+        test('Legend items have colored line samples', () => {
+            const container = document.getElementById('test-container');
+            const series = [
+                { name: 'Series A', color: '#ff0088', points: [{x: 0, y: 0}] },
+                { name: 'Series B', color: '#00ff88', points: [{x: 0, y: 1}] }
+            ];
+            createLineChart(container, series);
+
+            const legendItems = container.querySelectorAll('.legend-item');
+            const line1 = legendItems[0].querySelector('line');
+            const line2 = legendItems[1].querySelector('line');
+
+            if (line1.getAttribute('stroke') !== '#ff0088') throw new Error('First legend line color incorrect');
+            if (line2.getAttribute('stroke') !== '#00ff88') throw new Error('Second legend line color incorrect');
+        });
+
+        // Test 5: Legend items have text labels
+        test('Legend items have text labels', () => {
+            const container = document.getElementById('test-container');
+            const series = [
+                { name: 'Entropy', color: '#ff0088', points: [{x: 0, y: 0}] },
+                { name: 'Density', color: '#00ff88', points: [{x: 0, y: 1}] }
+            ];
+            createLineChart(container, series);
+
+            const legendItems = container.querySelectorAll('.legend-item');
+            const text1 = legendItems[0].querySelector('text');
+            const text2 = legendItems[1].querySelector('text');
+
+            if (text1.textContent !== 'Entropy') throw new Error('First legend text incorrect');
+            if (text2.textContent !== 'Density') throw new Error('Second legend text incorrect');
+        });
+
+        // Test 6: Legend items are vertically spaced
+        test('Legend items are vertically spaced', () => {
+            const container = document.getElementById('test-container');
+            const series = [
+                { name: 'Series A', color: '#ff0088', points: [{x: 0, y: 0}] },
+                { name: 'Series B', color: '#00ff88', points: [{x: 0, y: 1}] },
+                { name: 'Series C', color: '#0088ff', points: [{x: 0, y: 2}] }
+            ];
+            createLineChart(container, series);
+
+            const legendItems = container.querySelectorAll('.legend-item');
+            const transforms = Array.from(legendItems).map(item => item.getAttribute('transform'));
+
+            // Should be at y positions 0, 25, 50 (25px spacing)
+            if (!transforms[0].includes('0')) throw new Error('First item not at y=0');
+            if (!transforms[1].includes('25')) throw new Error('Second item not at y=25');
+            if (!transforms[2].includes('50')) throw new Error('Third item not at y=50');
+        });
+
+        // Test 7: Legend handles 10 series without overflow
+        test('Legend handles up to 10 series', () => {
+            const container = document.getElementById('test-container');
+            const series = [];
+            for (let i = 0; i < 10; i++) {
+                series.push({
+                    name: `Series ${i}`,
+                    color: `hsl(${i * 36}, 70%, 60%)`,
+                    points: [{x: 0, y: i}]
+                });
+            }
+            createLineChart(container, series);
+
+            const legendItems = container.querySelectorAll('.legend-item');
+            if (legendItems.length !== 10) throw new Error(`Expected 10 legend items, got ${legendItems.length}`);
+
+            // Check that last item is at reasonable position (9 * 25 = 225px)
+            const lastTransform = legendItems[9].getAttribute('transform');
+            if (!lastTransform.includes('225')) throw new Error('Last item overflow');
+        });
+
+        // Test 8: Legend text is readable (not too small)
+        test('Legend text is readable size', () => {
+            const container = document.getElementById('test-container');
+            const series = [
+                { name: 'Series A', color: '#ff0088', points: [{x: 0, y: 0}] }
+            ];
+            createLineChart(container, series);
+
+            const text = container.querySelector('.legend-item text');
+            const fontSize = parseInt(text.getAttribute('font-size'));
+            if (fontSize < 12) throw new Error(`Font size too small: ${fontSize}px`);
+        });
+
+        // Test 9: Legend colors match line colors in chart
+        test('Legend colors match actual series colors', () => {
+            const container = document.getElementById('test-container');
+            const testColor1 = '#ff0088';
+            const testColor2 = '#00ff88';
+            const series = [
+                { name: 'Series A', color: testColor1, points: [{x: 0, y: 0}, {x: 1, y: 1}] },
+                { name: 'Series B', color: testColor2, points: [{x: 0, y: 1}, {x: 1, y: 0}] }
+            ];
+            createLineChart(container, series);
+
+            const legendLines = container.querySelectorAll('.legend-item line');
+            if (legendLines[0].getAttribute('stroke') !== testColor1) throw new Error('Color mismatch for series 1');
+            if (legendLines[1].getAttribute('stroke') !== testColor2) throw new Error('Color mismatch for series 2');
+        });
+
+        // Test 10: Legend does not obscure plot area
+        test('Legend positioned outside plot area', () => {
+            const container = document.getElementById('test-container');
+            const series = [
+                { name: 'Series A', color: '#ff0088', points: [{x: 0, y: 0}] }
+            ];
+            const margin = { top: 60, right: 160, bottom: 60, left: 80 };
+            createLineChart(container, series, { width: 800, height: 600, margin });
+
+            const legend = container.querySelector('.legend');
+            const transform = legend.getAttribute('transform');
+
+            // Extract x position from transform
+            const match = transform.match(/translate\((\d+)/);
+            const legendX = parseInt(match[1]);
+
+            // Plot area ends at width - margin.right = 800 - 160 = 640
+            // Legend should start after that
+            if (legendX <= 640) throw new Error('Legend overlaps plot area');
+        });
+
+        // Run all tests and display results
+        const resultsDiv = document.getElementById('results');
+        const passCount = results.filter(r => r.pass).length;
+        const failCount = results.length - passCount;
+
+        resultsDiv.innerHTML = `<h2>Results: ${passCount}/${results.length} passed</h2>`;
+        results.forEach(r => {
+            const div = document.createElement('div');
+            div.className = `test-result ${r.pass ? 'pass' : 'fail'}`;
+            div.textContent = `${r.pass ? '✓' : '✗'} ${r.name}${r.error ? ': ' + r.error : ''}`;
+            resultsDiv.appendChild(div);
+        });
+
+        // Create a visual test
+        const container = document.getElementById('test-container');
+        const visualSeries = [
+            { name: 'Entropy', color: '#ff0088', points: [{x: 0, y: 0.2}, {x: 1, y: 0.5}, {x: 2, y: 0.8}, {x: 3, y: 0.6}] },
+            { name: 'Density', color: '#00ff88', points: [{x: 0, y: 0.5}, {x: 1, y: 0.6}, {x: 2, y: 0.7}, {x: 3, y: 0.75}] },
+            { name: 'Lyapunov', color: '#0088ff', points: [{x: 0, y: 0.1}, {x: 1, y: 0.3}, {x: 2, y: 0.9}, {x: 3, y: 1.2}] }
+        ];
+        createLineChart(container, visualSeries, {
+            width: 800,
+            height: 600,
+            xLabel: 'Time',
+            yLabel: 'Metric Value'
+        });
+    </script>
+</body>
+</html>

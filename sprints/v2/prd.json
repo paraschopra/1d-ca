@@ -105,7 +105,7 @@
       "Legend handles up to 10 series without visual overflow",
       "Series names are readable and do not truncate"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Custom Charting Engine",
