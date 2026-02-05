@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1D Cellular Automata Explorer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 0;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: #00ff88;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+        }
+
+        .controls {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 20px 0;
+        }
+
+        .rule-card {
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .rule-card:hover {
+            border-color: #00ff88;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 255, 136, 0.2);
+        }
+
+        .rule-number {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #00ff88;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            border-radius: 4px;
+            image-rendering: pixelated;
+        }
+
+        .metrics {
+            margin-top: 8px;
+            font-size: 0.75em;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>1D Cellular Automata Explorer</h1>
+    </header>
+
+    <div class="controls">
+        <!-- Controls will be added in later tasks -->
+    </div>
+
+    <div class="grid-container" id="grid"></div>
+
+    <script>
+        // ============================================
+        // CA ENGINE FUNCTIONS
+        // ============================================
+
+        function ruleToLookupTable(ruleNumber) {
+            const table = {};
+            for (let i = 0; i < 8; i++) {
+                table[i] = (ruleNumber >> i) & 1;
+            }
+            return table;
+        }
+
+        function evolveRow(row, lookupTable) {
+            const n = row.length;
+            const nextRow = new Array(n);
+            for (let i = 0; i < n; i++) {
+                const left = row[(i - 1 + n) % n];
+                const center = row[i];
+                const right = row[(i + 1) % n];
+                const neighborhood = (left << 2) | (center << 1) | right;
+                nextRow[i] = lookupTable[neighborhood];
+            }
+            return nextRow;
+        }
+
+        function generateGrid(ruleNumber, width, generations, initialConfig = null) {
+            const lookupTable = ruleToLookupTable(ruleNumber);
+            const grid = [];
+            if (!initialConfig) {
+                initialConfig = new Array(width).fill(0);
+                initialConfig[Math.floor(width / 2)] = 1;
+            }
+            grid.push([...initialConfig]);
+            for (let gen = 1; gen < generations; gen++) {
+                const prevRow = grid[gen - 1];
+                const nextRow = evolveRow(prevRow, lookupTable);
+                grid.push(nextRow);
+            }
+            return grid;
+        }
+
+        function generateCenterCell(width) {
+            const config = new Array(width).fill(0);
+            config[Math.floor(width / 2)] = 1;
+            return config;
+        }
+
+        function generateRandom(width, density) {
+            const config = new Array(width);
+            for (let i = 0; i < width; i++) {
+                config[i] = Math.random() < density ? 1 : 0;
+            }
+            return config;
+        }
+
+        // ============================================
+        // RENDERING FUNCTIONS
+        // ============================================
+
+        function renderToCanvas(grid, canvas) {
+            const rows = grid.length;
+            const cols = grid[0].length;
+
+            // Set canvas size
+            canvas.width = cols;
+            canvas.height = rows;
+
+            const ctx = canvas.getContext('2d');
+
+            // Create image data for efficient pixel manipulation
+            const imageData = ctx.createImageData(cols, rows);
+            const data = imageData.data;
+
+            for (let y = 0; y < rows; y++) {
+                for (let x = 0; x < cols; x++) {
+                    const idx = (y * cols + x) * 4;
+                    const value = grid[y][x] === 1 ? 0 : 255;
+                    data[idx] = value;     // R
+                    data[idx + 1] = value; // G
+                    data[idx + 2] = value; // B
+                    data[idx + 3] = 255;   // A
+                }
+            }
+
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        // ============================================
+        // MAIN APPLICATION
+        // ============================================
+
+        function renderAllRules() {
+            const gridContainer = document.getElementById('grid');
+            gridContainer.innerHTML = '';
+
+            const GRID_SIZE = 128;
+            const GENERATIONS = 128;
+
+            for (let rule = 0; rule < 256; rule++) {
+                // Create card
+                const card = document.createElement('div');
+                card.className = 'rule-card';
+
+                // Rule number
+                const ruleLabel = document.createElement('div');
+                ruleLabel.className = 'rule-number';
+                ruleLabel.textContent = `Rule ${rule}`;
+                card.appendChild(ruleLabel);
+
+                // Canvas
+                const canvas = document.createElement('canvas');
+                card.appendChild(canvas);
+
+                // Generate and render grid
+                const grid = generateGrid(rule, GRID_SIZE, GENERATIONS);
+                renderToCanvas(grid, canvas);
+
+                // Metrics placeholder
+                const metrics = document.createElement('div');
+                metrics.className = 'metrics';
+                metrics.textContent = 'Metrics coming soon...';
+                card.appendChild(metrics);
+
+                gridContainer.appendChild(card);
+            }
+        }
+
+        // Initialize
+        renderAllRules();
+    </script>
+</body>
+</html>

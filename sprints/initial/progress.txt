@@ -87,3 +87,12 @@ Task 4: Initial Configuration Generators - ✓ COMPLETE (2026-02-05)
 - Implemented generateRandom(width, density) - probabilistic initialization
 - All 9 new tests passing (30 total tests, 100%)
 - Verified: even/odd width handling, density 0.0/0.5/1.0, non-determinism
+
+Task 5: Canvas Rendering - ✓ COMPLETE (2026-02-05)
+---------------------------------------------------
+- Created src/index.html with full HTML5 canvas rendering
+- Implemented renderToCanvas(grid, canvas) for efficient pixel drawing
+- Renders all 256 rules with 128x128 resolution
+- Uses ImageData API for crisp, non-anti-aliased pixels
+- All tests passing: 256 canvases created, correct dimensions, proper patterns
+- Verified Rule 30 triangle pattern (38% density)

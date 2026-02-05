@@ -59,7 +59,7 @@
       "Verify that cell boundaries are crisp with no anti-aliasing artifacts (use integer pixel coordinates)",
       "Render multiple canvases (at least 10) and verify they all display correctly without visual glitches"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Canvas Rendering",
