@@ -96,3 +96,15 @@ Task 5: Canvas Rendering - ✓ COMPLETE (2026-02-05)
 - Uses ImageData API for crisp, non-anti-aliased pixels
 - All tests passing: 256 canvases created, correct dimensions, proper patterns
 - Verified Rule 30 triangle pattern (38% density)
+
+Task 6: Rule Labels & Card Styling - ✓ COMPLETE (2026-02-05)
+-------------------------------------------------------------
+- Rule N labels above each canvas card
+- Distinct styling: 1.1em, font-weight 600, #00ff88 color
+- Consistent card padding (12px), border (2px), border-radius (8px)
+
+Task 7: Efficient Batch Rendering - ✓ COMPLETE (2026-02-05)
+-------------------------------------------------------------
+- Chunked rendering with requestAnimationFrame (16 rules per frame)
+- All 256 canvases render correctly with non-blocking rendering
+- Spot-checked Rules 0, 30, 90, 110, 184, 255

@@ -71,7 +71,7 @@
       "Verify the rule number is readable at the default card size without zooming",
       "Verify the styling does not overlap with or obscure the canvas rendering"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Canvas Rendering",
@@ -83,7 +83,7 @@
       "Verify that no canvases are blank or missing after rendering completes",
       "Refresh the page multiple times and verify consistent, complete rendering each time"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Metrics Computation",

@@ -189,40 +189,81 @@
         // MAIN APPLICATION
         // ============================================
 
-        function renderAllRules() {
+        const GRID_SIZE = 128;
+        const GENERATIONS = 128;
+        const CHUNK_SIZE = 16; // Render 16 rules per animation frame
+
+        let currentMode = 'center'; // 'center' or 'random'
+        let currentDensity = 0.5;
+
+        function createCard(rule) {
+            const card = document.createElement('div');
+            card.className = 'rule-card';
+            card.dataset.rule = rule;
+
+            const ruleLabel = document.createElement('div');
+            ruleLabel.className = 'rule-number';
+            ruleLabel.textContent = `Rule ${rule}`;
+            card.appendChild(ruleLabel);
+
+            const canvas = document.createElement('canvas');
+            card.appendChild(canvas);
+
+            const metrics = document.createElement('div');
+            metrics.className = 'metrics';
+            card.appendChild(metrics);
+
+            return card;
+        }
+
+        function getInitialConfig() {
+            if (currentMode === 'center') {
+                return generateCenterCell(GRID_SIZE);
+            }
+            return generateRandom(GRID_SIZE, currentDensity);
+        }
+
+        function renderRuleCard(card) {
+            const rule = parseInt(card.dataset.rule);
+            const canvas = card.querySelector('canvas');
+            const initialConfig = currentMode === 'center' ? null : getInitialConfig();
+            const grid = generateGrid(rule, GRID_SIZE, GENERATIONS, initialConfig);
+            renderToCanvas(grid, canvas);
+            return grid;
+        }
+
+        function renderAllRules(onComplete) {
             const gridContainer = document.getElementById('grid');
             gridContainer.innerHTML = '';
 
-            const GRID_SIZE = 128;
-            const GENERATIONS = 128;
-
+            // Create all cards first (DOM structure)
+            const cards = [];
             for (let rule = 0; rule < 256; rule++) {
-                // Create card
-                const card = document.createElement('div');
-                card.className = 'rule-card';
-
-                // Rule number
-                const ruleLabel = document.createElement('div');
-                ruleLabel.className = 'rule-number';
-                ruleLabel.textContent = `Rule ${rule}`;
-                card.appendChild(ruleLabel);
-
-                // Canvas
-                const canvas = document.createElement('canvas');
-                card.appendChild(canvas);
-
-                // Generate and render grid
-                const grid = generateGrid(rule, GRID_SIZE, GENERATIONS);
-                renderToCanvas(grid, canvas);
-
-                // Metrics placeholder
-                const metrics = document.createElement('div');
-                metrics.className = 'metrics';
-                metrics.textContent = 'Metrics coming soon...';
-                card.appendChild(metrics);
-
+                const card = createCard(rule);
                 gridContainer.appendChild(card);
+                cards.push(card);
             }
+
+            // Render in chunks using requestAnimationFrame
+            let currentIndex = 0;
+
+            function renderChunk() {
+                const endIndex = Math.min(currentIndex + CHUNK_SIZE, 256);
+
+                for (let i = currentIndex; i < endIndex; i++) {
+                    renderRuleCard(cards[i]);
+                }
+
+                currentIndex = endIndex;
+
+                if (currentIndex < 256) {
+                    requestAnimationFrame(renderChunk);
+                } else if (onComplete) {
+                    onComplete();
+                }
+            }
+
+            requestAnimationFrame(renderChunk);
         }
 
         // Initialize
