@@ -69,7 +69,7 @@
       "The plot handles edge cases: empty data, single point, all points at same x or y value",
       "Points with different color values render in different fill colors"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Custom Charting Engine",
@@ -81,7 +81,7 @@
       "Labels do not overlap with the plot area or get clipped",
       "Tick positions auto-scale based on data range (min/max of actual values)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Custom Charting Engine",

@@ -730,6 +730,203 @@
             return { entropy, density, meanField, symmetry, lyapunov, compressibility, period, wolframClass };
         }
 
+        // Charting Engine - Scatter Plot
+        function createScatterPlot(container, data, config = {}) {
+            const width = config.width || 600;
+            const height = config.height || 400;
+            const margins = config.margins || { top: 20, right: 20, bottom: 40, left: 50 };
+            const xLabel = config.xLabel || 'X Axis';
+            const yLabel = config.yLabel || 'Y Axis';
+
+            // Clear container
+            container.innerHTML = '';
+
+            // Create SVG
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+            svg.setAttribute('width', width);
+            svg.setAttribute('height', height);
+            svg.style.background = '#1a1a1a';
+            container.appendChild(svg);
+
+            // Handle empty or single-point data
+            if (!data || data.length === 0) {
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', width / 2);
+                text.setAttribute('y', height / 2);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('fill', '#888');
+                text.textContent = 'No data';
+                svg.appendChild(text);
+                return svg;
+            }
+
+            // Calculate scales
+            const xValues = data.map(d => d.x);
+            const yValues = data.map(d => d.y);
+            const xMin = Math.min(...xValues);
+            const xMax = Math.max(...xValues);
+            const yMin = Math.min(...yValues);
+            const yMax = Math.max(...yValues);
+
+            // Add padding for edge cases
+            const xRange = xMax - xMin || 1;
+            const yRange = yMax - yMin || 1;
+            const xPadding = xRange * 0.1;
+            const yPadding = yRange * 0.1;
+
+            const plotWidth = width - margins.left - margins.right;
+            const plotHeight = height - margins.top - margins.bottom;
+
+            const xScale = (x) => margins.left + ((x - (xMin - xPadding)) / (xRange + 2 * xPadding)) * plotWidth;
+            const yScale = (y) => margins.top + plotHeight - ((y - (yMin - yPadding)) / (yRange + 2 * yPadding)) * plotHeight;
+
+            // Draw gridlines
+            const gridGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            for (let i = 0; i <= 5; i++) {
+                const x = margins.left + (i / 5) * plotWidth;
+                const y = margins.top + (i / 5) * plotHeight;
+
+                // Vertical gridlines
+                const vLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                vLine.setAttribute('x1', x);
+                vLine.setAttribute('y1', margins.top);
+                vLine.setAttribute('x2', x);
+                vLine.setAttribute('y2', margins.top + plotHeight);
+                vLine.setAttribute('stroke', '#333');
+                vLine.setAttribute('stroke-width', '1');
+                gridGroup.appendChild(vLine);
+
+                // Horizontal gridlines
+                const hLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                hLine.setAttribute('x1', margins.left);
+                hLine.setAttribute('y1', y);
+                hLine.setAttribute('x2', margins.left + plotWidth);
+                hLine.setAttribute('y2', y);
+                hLine.setAttribute('stroke', '#333');
+                hLine.setAttribute('stroke-width', '1');
+                gridGroup.appendChild(hLine);
+            }
+            svg.appendChild(gridGroup);
+
+            // Draw axes
+            const axesGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+            // X-axis
+            const xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            xAxis.setAttribute('x1', margins.left);
+            xAxis.setAttribute('y1', margins.top + plotHeight);
+            xAxis.setAttribute('x2', margins.left + plotWidth);
+            xAxis.setAttribute('y2', margins.top + plotHeight);
+            xAxis.setAttribute('stroke', '#666');
+            xAxis.setAttribute('stroke-width', '2');
+            axesGroup.appendChild(xAxis);
+
+            // Y-axis
+            const yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            yAxis.setAttribute('x1', margins.left);
+            yAxis.setAttribute('y1', margins.top);
+            yAxis.setAttribute('x2', margins.left);
+            yAxis.setAttribute('y2', margins.top + plotHeight);
+            yAxis.setAttribute('stroke', '#666');
+            yAxis.setAttribute('stroke-width', '2');
+            axesGroup.appendChild(yAxis);
+
+            svg.appendChild(axesGroup);
+
+            // Draw tick marks and labels
+            const tickGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+            for (let i = 0; i <= 5; i++) {
+                const x = margins.left + (i / 5) * plotWidth;
+                const y = margins.top + plotHeight;
+                const xValue = xMin - xPadding + (i / 5) * (xRange + 2 * xPadding);
+
+                // X-axis tick
+                const xTick = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                xTick.setAttribute('x1', x);
+                xTick.setAttribute('y1', y);
+                xTick.setAttribute('x2', x);
+                xTick.setAttribute('y2', y + 5);
+                xTick.setAttribute('stroke', '#666');
+                xTick.setAttribute('stroke-width', '2');
+                tickGroup.appendChild(xTick);
+
+                // X-axis label
+                const xText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                xText.setAttribute('x', x);
+                xText.setAttribute('y', y + 20);
+                xText.setAttribute('text-anchor', 'middle');
+                xText.setAttribute('fill', '#aaa');
+                xText.setAttribute('font-size', '10');
+                xText.textContent = xValue.toFixed(2);
+                tickGroup.appendChild(xText);
+
+                // Y-axis
+                const yPos = margins.top + (i / 5) * plotHeight;
+                const yValue = yMax + yPadding - (i / 5) * (yRange + 2 * yPadding);
+
+                // Y-axis tick
+                const yTick = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                yTick.setAttribute('x1', margins.left - 5);
+                yTick.setAttribute('y1', yPos);
+                yTick.setAttribute('x2', margins.left);
+                yTick.setAttribute('y2', yPos);
+                yTick.setAttribute('stroke', '#666');
+                yTick.setAttribute('stroke-width', '2');
+                tickGroup.appendChild(yTick);
+
+                // Y-axis label
+                const yText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                yText.setAttribute('x', margins.left - 10);
+                yText.setAttribute('y', yPos + 3);
+                yText.setAttribute('text-anchor', 'end');
+                yText.setAttribute('fill', '#aaa');
+                yText.setAttribute('font-size', '10');
+                yText.textContent = yValue.toFixed(2);
+                tickGroup.appendChild(yText);
+            }
+
+            svg.appendChild(tickGroup);
+
+            // Axis titles
+            const xLabelEl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            xLabelEl.setAttribute('x', margins.left + plotWidth / 2);
+            xLabelEl.setAttribute('y', height - 5);
+            xLabelEl.setAttribute('text-anchor', 'middle');
+            xLabelEl.setAttribute('fill', '#00ff88');
+            xLabelEl.setAttribute('font-size', '12');
+            xLabelEl.textContent = xLabel;
+            svg.appendChild(xLabelEl);
+
+            const yLabelEl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            yLabelEl.setAttribute('x', 10);
+            yLabelEl.setAttribute('y', margins.top + plotHeight / 2);
+            yLabelEl.setAttribute('text-anchor', 'middle');
+            yLabelEl.setAttribute('fill', '#00ff88');
+            yLabelEl.setAttribute('font-size', '12');
+            yLabelEl.setAttribute('transform', `rotate(-90, 10, ${margins.top + plotHeight / 2})`);
+            yLabelEl.textContent = yLabel;
+            svg.appendChild(yLabelEl);
+
+            // Draw data points
+            const pointsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            data.forEach((point) => {
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', xScale(point.x));
+                circle.setAttribute('cy', yScale(point.y));
+                circle.setAttribute('r', 4);
+                circle.setAttribute('fill', point.color || '#00ff88');
+                circle.setAttribute('data-label', point.label || '');
+                circle.setAttribute('data-x', point.x);
+                circle.setAttribute('data-y', point.y);
+                pointsGroup.appendChild(circle);
+            });
+            svg.appendChild(pointsGroup);
+
+            return svg;
+        }
+
         // Rendering
         function renderToCanvas(grid, canvas) {
             const rows = grid.length;
@@ -946,6 +1143,28 @@
         if (window.location.hash.slice(1) === 'grid' || !window.location.hash) {
             renderAllRules();
         }
+
+        // Demo scatter plot in Rule Map panel (will be replaced with actual implementation)
+        const mapPanel = document.getElementById('panel-map');
+        const demoContainer = document.createElement('div');
+        demoContainer.style.padding = '20px';
+        demoContainer.style.textAlign = 'center';
+        mapPanel.querySelector('.placeholder').after(demoContainer);
+
+        const demoData = [
+            { x: 0.2, y: 0.5, label: 'Rule 30', color: '#ef5350' },
+            { x: 0.5, y: 0.8, label: 'Rule 110', color: '#ffa726' },
+            { x: 0.8, y: 0.3, label: 'Rule 90', color: '#42a5f5' },
+            { x: 0.4, y: 0.6, label: 'Rule 150', color: '#4caf50' },
+            { x: 0.7, y: 0.9, label: 'Rule 22', color: '#ef5350' }
+        ];
+
+        createScatterPlot(demoContainer, demoData, {
+            width: 600,
+            height: 400,
+            xLabel: 'Entropy (demo)',
+            yLabel: 'Lyapunov Exponent (demo)'
+        });
     </script>
 </body>
 </html>

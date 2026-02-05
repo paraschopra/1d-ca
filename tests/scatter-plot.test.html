@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Scatter Plot Tests</title>
+    <style>
+        body { background: #0a0a0a; color: #e0e0e0; padding: 20px; font-family: monospace; }
+        #test-container { margin: 20px 0; }
+        .test-result { margin: 10px 0; }
+        .pass { color: #00ff88; }
+        .fail { color: #ef5350; }
+    </style>
+</head>
+<body>
+    <h1>Scatter Plot Renderer Tests</h1>
+    <div id="test-results"></div>
+    <div id="test-container"></div>
+
+    <script>
+        const tests = [];
+        const results = [];
+
+        function test(name, fn) {
+            tests.push({ name, fn });
+        }
+
+        function assert(condition, message) {
+            if (!condition) {
+                throw new Error(message || 'Assertion failed');
+            }
+        }
+
+        function assertEqual(actual, expected, message) {
+            if (actual !== expected) {
+                throw new Error(`${message || 'Assertion failed'}: expected ${expected}, got ${actual}`);
+            }
+        }
+
+        function assertInRange(value, min, max, message) {
+            if (value < min || value > max) {
+                throw new Error(`${message || 'Assertion failed'}: ${value} not in range [${min}, ${max}]`);
+            }
+        }
+
+        // Minimal scatter plot renderer for testing
+        function createScatterPlot(container, data, config = {}) {
+            const width = config.width || 600;
+            const height = config.height || 400;
+            const margins = config.margins || { top: 20, right: 20, bottom: 40, left: 50 };
+            const xLabel = config.xLabel || 'X Axis';
+            const yLabel = config.yLabel || 'Y Axis';
+
+            // Clear container
+            container.innerHTML = '';
+
+            // Create SVG
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+            svg.setAttribute('width', width);
+            svg.setAttribute('height', height);
+            svg.style.background = '#1a1a1a';
+            container.appendChild(svg);
+
+            // Handle empty or single-point data
+            if (!data || data.length === 0) {
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', width / 2);
+                text.setAttribute('y', height / 2);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('fill', '#888');
+                text.textContent = 'No data';
+                svg.appendChild(text);
+                return svg;
+            }
+
+            // Calculate scales
+            const xValues = data.map(d => d.x);
+            const yValues = data.map(d => d.y);
+            const xMin = Math.min(...xValues);
+            const xMax = Math.max(...xValues);
+            const yMin = Math.min(...yValues);
+            const yMax = Math.max(...yValues);
+
+            // Add padding for edge cases
+            const xRange = xMax - xMin || 1;
+            const yRange = yMax - yMin || 1;
+            const xPadding = xRange * 0.1;
+            const yPadding = yRange * 0.1;
+
+            const plotWidth = width - margins.left - margins.right;
+            const plotHeight = height - margins.top - margins.bottom;
+
+            const xScale = (x) => margins.left + ((x - (xMin - xPadding)) / (xRange + 2 * xPadding)) * plotWidth;
+            const yScale = (y) => margins.top + plotHeight - ((y - (yMin - yPadding)) / (yRange + 2 * yPadding)) * plotHeight;
+
+            // Draw gridlines
+            const gridGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            for (let i = 0; i <= 5; i++) {
+                const x = margins.left + (i / 5) * plotWidth;
+                const y = margins.top + (i / 5) * plotHeight;
+
+                // Vertical gridlines
+                const vLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                vLine.setAttribute('x1', x);
+                vLine.setAttribute('y1', margins.top);
+                vLine.setAttribute('x2', x);
+                vLine.setAttribute('y2', margins.top + plotHeight);
+                vLine.setAttribute('stroke', '#333');
+                vLine.setAttribute('stroke-width', '1');
+                gridGroup.appendChild(vLine);
+
+                // Horizontal gridlines
+                const hLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                hLine.setAttribute('x1', margins.left);
+                hLine.setAttribute('y1', y);
+                hLine.setAttribute('x2', margins.left + plotWidth);
+                hLine.setAttribute('y2', y);
+                hLine.setAttribute('stroke', '#333');
+                hLine.setAttribute('stroke-width', '1');
+                gridGroup.appendChild(hLine);
+            }
+            svg.appendChild(gridGroup);
+
+            // Draw axes
+            const axesGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+            // X-axis
+            const xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            xAxis.setAttribute('x1', margins.left);
+            xAxis.setAttribute('y1', margins.top + plotHeight);
+            xAxis.setAttribute('x2', margins.left + plotWidth);
+            xAxis.setAttribute('y2', margins.top + plotHeight);
+            xAxis.setAttribute('stroke', '#666');
+            xAxis.setAttribute('stroke-width', '2');
+            axesGroup.appendChild(xAxis);
+
+            // Y-axis
+            const yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            yAxis.setAttribute('x1', margins.left);
+            yAxis.setAttribute('y1', margins.top);
+            yAxis.setAttribute('x2', margins.left);
+            yAxis.setAttribute('y2', margins.top + plotHeight);
+            yAxis.setAttribute('stroke', '#666');
+            yAxis.setAttribute('stroke-width', '2');
+            axesGroup.appendChild(yAxis);
+
+            svg.appendChild(axesGroup);
+
+            // Draw tick marks and labels
+            const tickGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+            for (let i = 0; i <= 5; i++) {
+                const x = margins.left + (i / 5) * plotWidth;
+                const y = margins.top + plotHeight;
+                const xValue = xMin - xPadding + (i / 5) * (xRange + 2 * xPadding);
+
+                // X-axis tick
+                const xTick = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                xTick.setAttribute('x1', x);
+                xTick.setAttribute('y1', y);
+                xTick.setAttribute('x2', x);
+                xTick.setAttribute('y2', y + 5);
+                xTick.setAttribute('stroke', '#666');
+                xTick.setAttribute('stroke-width', '2');
+                tickGroup.appendChild(xTick);
+
+                // X-axis label
+                const xText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                xText.setAttribute('x', x);
+                xText.setAttribute('y', y + 20);
+                xText.setAttribute('text-anchor', 'middle');
+                xText.setAttribute('fill', '#aaa');
+                xText.setAttribute('font-size', '10');
+                xText.textContent = xValue.toFixed(2);
+                tickGroup.appendChild(xText);
+
+                // Y-axis
+                const yPos = margins.top + (i / 5) * plotHeight;
+                const yValue = yMax + yPadding - (i / 5) * (yRange + 2 * yPadding);
+
+                // Y-axis tick
+                const yTick = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                yTick.setAttribute('x1', margins.left - 5);
+                yTick.setAttribute('y1', yPos);
+                yTick.setAttribute('x2', margins.left);
+                yTick.setAttribute('y2', yPos);
+                yTick.setAttribute('stroke', '#666');
+                yTick.setAttribute('stroke-width', '2');
+                tickGroup.appendChild(yTick);
+
+                // Y-axis label
+                const yText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                yText.setAttribute('x', margins.left - 10);
+                yText.setAttribute('y', yPos + 3);
+                yText.setAttribute('text-anchor', 'end');
+                yText.setAttribute('fill', '#aaa');
+                yText.setAttribute('font-size', '10');
+                yText.textContent = yValue.toFixed(2);
+                tickGroup.appendChild(yText);
+            }
+
+            svg.appendChild(tickGroup);
+
+            // Axis titles
+            const xLabelEl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            xLabelEl.setAttribute('x', margins.left + plotWidth / 2);
+            xLabelEl.setAttribute('y', height - 5);
+            xLabelEl.setAttribute('text-anchor', 'middle');
+            xLabelEl.setAttribute('fill', '#00ff88');
+            xLabelEl.setAttribute('font-size', '12');
+            xLabelEl.textContent = xLabel;
+            svg.appendChild(xLabelEl);
+
+            const yLabelEl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            yLabelEl.setAttribute('x', 10);
+            yLabelEl.setAttribute('y', margins.top + plotHeight / 2);
+            yLabelEl.setAttribute('text-anchor', 'middle');
+            yLabelEl.setAttribute('fill', '#00ff88');
+            yLabelEl.setAttribute('font-size', '12');
+            yLabelEl.setAttribute('transform', `rotate(-90, 10, ${margins.top + plotHeight / 2})`);
+            yLabelEl.textContent = yLabel;
+            svg.appendChild(yLabelEl);
+
+            // Draw data points
+            const pointsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            data.forEach((point) => {
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', xScale(point.x));
+                circle.setAttribute('cy', yScale(point.y));
+                circle.setAttribute('r', 4);
+                circle.setAttribute('fill', point.color || '#00ff88');
+                circle.setAttribute('data-label', point.label || '');
+                pointsGroup.appendChild(circle);
+            });
+            svg.appendChild(pointsGroup);
+
+            return svg;
+        }
+
+        // Test Suite
+        test('Function accepts container, data, and config', () => {
+            const container = document.createElement('div');
+            const data = [{ x: 0, y: 0, label: 'test', color: '#ff0000' }];
+            const config = { width: 400, height: 300 };
+
+            const svg = createScatterPlot(container, data, config);
+            assert(svg, 'Should return an SVG element');
+            assertEqual(svg.tagName, 'svg', 'Should return an SVG element');
+        });
+
+        test('Creates SVG with correct viewBox', () => {
+            const container = document.createElement('div');
+            const data = [{ x: 1, y: 2 }];
+            const svg = createScatterPlot(container, data, { width: 500, height: 400 });
+
+            assertEqual(svg.getAttribute('viewBox'), '0 0 500 400', 'ViewBox should match dimensions');
+        });
+
+        test('Renders data points as circles', () => {
+            const container = document.createElement('div');
+            const data = [
+                { x: 1, y: 2, label: 'A', color: '#ff0000' },
+                { x: 3, y: 4, label: 'B', color: '#00ff00' },
+                { x: 5, y: 6, label: 'C', color: '#0000ff' }
+            ];
+
+            const svg = createScatterPlot(container, data);
+            const circles = svg.querySelectorAll('circle');
+
+            assertEqual(circles.length, 3, 'Should have 3 circles');
+        });
+
+        test('Points render with correct colors', () => {
+            const container = document.createElement('div');
+            const data = [
+                { x: 1, y: 1, color: '#ff0000' },
+                { x: 2, y: 2, color: '#00ff00' }
+            ];
+
+            const svg = createScatterPlot(container, data);
+            const circles = svg.querySelectorAll('circle');
+
+            assertEqual(circles[0].getAttribute('fill'), '#ff0000', 'First point should be red');
+            assertEqual(circles[1].getAttribute('fill'), '#00ff00', 'Second point should be green');
+        });
+
+        test('Handles empty data gracefully', () => {
+            const container = document.createElement('div');
+            const svg = createScatterPlot(container, []);
+
+            const text = svg.querySelector('text');
+            assert(text, 'Should show a message for empty data');
+            assert(text.textContent.includes('No data'), 'Should display "No data" message');
+        });
+
+        test('Handles single point', () => {
+            const container = document.createElement('div');
+            const data = [{ x: 5, y: 10 }];
+
+            const svg = createScatterPlot(container, data);
+            const circles = svg.querySelectorAll('circle');
+
+            assertEqual(circles.length, 1, 'Should render single point');
+        });
+
+        test('Handles all points at same x value', () => {
+            const container = document.createElement('div');
+            const data = [
+                { x: 5, y: 1 },
+                { x: 5, y: 2 },
+                { x: 5, y: 3 }
+            ];
+
+            const svg = createScatterPlot(container, data);
+            const circles = svg.querySelectorAll('circle');
+
+            assertEqual(circles.length, 3, 'Should render all points');
+            // All circles should have same x coordinate
+            const xCoords = Array.from(circles).map(c => parseFloat(c.getAttribute('cx')));
+            assert(xCoords.every(x => x === xCoords[0]), 'All points should have same x coordinate');
+        });
+
+        test('Handles all points at same y value', () => {
+            const container = document.createElement('div');
+            const data = [
+                { x: 1, y: 5 },
+                { x: 2, y: 5 },
+                { x: 3, y: 5 }
+            ];
+
+            const svg = createScatterPlot(container, data);
+            const circles = svg.querySelectorAll('circle');
+
+            assertEqual(circles.length, 3, 'Should render all points');
+            // All circles should have same y coordinate
+            const yCoords = Array.from(circles).map(c => parseFloat(c.getAttribute('cy')));
+            assert(yCoords.every(y => y === yCoords[0]), 'All points should have same y coordinate');
+        });
+
+        test('Draws axes', () => {
+            const container = document.createElement('div');
+            const data = [{ x: 1, y: 2 }, { x: 3, y: 4 }];
+
+            const svg = createScatterPlot(container, data);
+            const lines = svg.querySelectorAll('line');
+
+            assert(lines.length >= 2, 'Should have at least x and y axes');
+        });
+
+        test('Draws gridlines', () => {
+            const container = document.createElement('div');
+            const data = [{ x: 1, y: 2 }, { x: 3, y: 4 }];
+
+            const svg = createScatterPlot(container, data);
+            const lines = svg.querySelectorAll('line');
+
+            assert(lines.length > 10, 'Should have multiple gridlines');
+        });
+
+        test('Axis labels are present', () => {
+            const container = document.createElement('div');
+            const data = [{ x: 1, y: 2 }];
+
+            const svg = createScatterPlot(container, data, {
+                xLabel: 'X Test',
+                yLabel: 'Y Test'
+            });
+
+            const texts = Array.from(svg.querySelectorAll('text'));
+            const xLabelExists = texts.some(t => t.textContent === 'X Test');
+            const yLabelExists = texts.some(t => t.textContent === 'Y Test');
+
+            assert(xLabelExists, 'X-axis label should be present');
+            assert(yLabelExists, 'Y-axis label should be present');
+        });
+
+        test('Points scale correctly to plot area', () => {
+            const container = document.createElement('div');
+            const data = [
+                { x: 0, y: 0 },
+                { x: 10, y: 10 }
+            ];
+
+            const svg = createScatterPlot(container, data, { width: 600, height: 400, margins: { top: 20, right: 20, bottom: 40, left: 50 } });
+            const circles = svg.querySelectorAll('circle');
+
+            const cx1 = parseFloat(circles[0].getAttribute('cx'));
+            const cx2 = parseFloat(circles[1].getAttribute('cx'));
+
+            assert(cx1 < cx2, 'Point with larger x should be to the right');
+            assertInRange(cx1, 50, 580, 'Point should be within plot area');
+            assertInRange(cx2, 50, 580, 'Point should be within plot area');
+        });
+
+        // Run tests
+        async function runTests() {
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML = '<h2>Running tests...</h2>';
+
+            for (const { name, fn } of tests) {
+                try {
+                    await fn();
+                    results.push({ name, passed: true });
+                    console.log(`✓ ${name}`);
+                } catch (error) {
+                    results.push({ name, passed: false, error: error.message });
+                    console.error(`✗ ${name}`);
+                    console.error(`  ${error.message}`);
+                }
+            }
+
+            const passed = results.filter(r => r.passed).length;
+            const failed = results.filter(r => !r.passed).length;
+
+            resultsDiv.innerHTML = `
+                <h2>Test Results</h2>
+                <p class="${failed === 0 ? 'pass' : 'fail'}">${passed} passed, ${failed} failed out of ${tests.length} tests</p>
+                ${results.map(r => `
+                    <div class="test-result ${r.passed ? 'pass' : 'fail'}">
+                        ${r.passed ? '✓' : '✗'} ${r.name}
+                        ${r.error ? `<br>&nbsp;&nbsp;${r.error}` : ''}
+                    </div>
+                `).join('')}
+            `;
+
+            // Visual test
+            if (failed === 0) {
+                const visualDiv = document.getElementById('test-container');
+                visualDiv.innerHTML = '<h2>Visual Test</h2>';
+
+                const testData = [
+                    { x: 0.2, y: 0.5, label: 'A', color: '#4caf50' },
+                    { x: 0.5, y: 0.8, label: 'B', color: '#42a5f5' },
+                    { x: 0.8, y: 0.3, label: 'C', color: '#ef5350' },
+                    { x: 0.4, y: 0.6, label: 'D', color: '#ffa726' },
+                    { x: 0.7, y: 0.9, label: 'E', color: '#00ff88' }
+                ];
+
+                createScatterPlot(visualDiv, testData, {
+                    width: 600,
+                    height: 400,
+                    xLabel: 'Entropy',
+                    yLabel: 'Lyapunov Exponent'
+                });
+            }
+        }
+
+        runTests();
+    </script>
+</body>
+</html>

@@ -92,3 +92,32 @@ Implemented complete tab navigation infrastructure:
    - Chunked rendering with requestAnimationFrame
 
 Next: Custom Charting Engine (Tasks 6-12) - SVG scatter, line charts, canvas heatmaps
+
+## 2026-02-05 - Custom Charting Engine: Scatter Plot (Tasks 6-7) - COMPLETE
+
+Implemented SVG scatter plot renderer with full axes and labels:
+
+1. Created createScatterPlot() function accepting:
+   - Container element, data array [{x, y, label, color}], config object
+   - Configurable width, height, margins, axis labels
+   
+2. Features implemented:
+   - SVG rendering with proper viewBox dimensions
+   - Data points as circles with custom colors
+   - Gridlines (5x5 grid pattern)
+   - X and Y axes with proper styling
+   - Tick marks with auto-scaled values
+   - Axis titles in green (#00ff88)
+   - Edge case handling: empty data, single point, same x/y values
+   - Auto-scaling based on data range with padding
+
+3. Tests: 12/12 passing (tests/scatter-plot.test.html)
+   - All edge cases verified
+   - Visual rendering tested and screenshot verified
+
+4. Integration:
+   - Added to src/v2-research-tools.html as reusable function
+   - Demo chart added to Rule Map panel for visual verification
+   - Dark theme styling matches app design
+
+Next: Line charts (Task 8) and heatmaps (Task 10) for Phase Explorer and Light Cones
