@@ -65,3 +65,30 @@ Codex was consulted for adversarial design review and flagged:
 
 Begin implementation with Category 1 (Tab Navigation & Layout) and Category 2 (Custom
 Charting Engine) in parallel, as all feature categories depend on these infrastructure pieces.
+
+## 2026-02-05 - Tab Navigation & Layout (Tasks 1-5) - COMPLETE
+
+Implemented complete tab navigation infrastructure:
+
+1. Created new entry point at src/index.html linking to v1 and v2 explorations
+2. Renamed src/index.html → src/v1-initial-exploration.html
+3. Created src/v2-research-tools.html with:
+   - Tab bar with 4 tabs (Grid View, Rule Map, Phase Explorer, Light Cones)
+   - Tab switching JS with URL hash routing
+   - Grid View panel wrapping all v1 CA functionality
+   - Placeholder panels for 3 new research features
+   - Dark theme (#1a1a1a) with green accent (#00ff88)
+
+4. Tests created and passing (15/15):
+   - tests/tab-navigation-playwright.js - comprehensive Playwright test suite
+   - All tab switching, hash routing, panel visibility verified
+   - Screenshots saved to scratchpad/ for visual verification
+
+5. All v1 functionality preserved in Grid View tab:
+   - 256 rule cards with metrics
+   - Center cell / Random mode toggle
+   - Density slider and randomize button
+   - Modal detail view with 512x512 rendering
+   - Chunked rendering with requestAnimationFrame
+
+Next: Custom Charting Engine (Tasks 6-12) - SVG scatter, line charts, canvas heatmaps

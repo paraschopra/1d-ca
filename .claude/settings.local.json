@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "mcp__codex__codex"
+      "mcp__codex__codex",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd v2 PRD: rule space map, phase transitions, block entropy, light cones\n\n37 atomic tasks across 6 categories for 4 new research features.\nREADME updated with 13 future research directions.\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
     ]
   }
 }

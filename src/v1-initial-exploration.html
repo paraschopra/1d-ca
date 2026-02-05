@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1D Cellular Automata Explorer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 0;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: #00ff88;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+        }
+
+        .controls {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .controls label {
+            font-size: 0.9em;
+            color: #aaa;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 0;
+        }
+
+        .btn-group button {
+            padding: 8px 16px;
+            border: 1px solid #555;
+            background: #222;
+            color: #ccc;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+
+        .btn-group button:first-child {
+            border-radius: 6px 0 0 6px;
+        }
+
+        .btn-group button:last-child {
+            border-radius: 0 6px 6px 0;
+        }
+
+        .btn-group button.active {
+            background: #00ff88;
+            color: #000;
+            border-color: #00ff88;
+            font-weight: 600;
+        }
+
+        .density-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: opacity 0.3s;
+        }
+
+        .density-control.disabled {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .density-control input[type="range"] {
+            width: 120px;
+            accent-color: #00ff88;
+        }
+
+        .density-value {
+            min-width: 40px;
+            text-align: right;
+            color: #00ff88;
+            font-weight: 600;
+        }
+
+        .btn-randomize {
+            padding: 8px 20px;
+            border: 1px solid #00ff88;
+            background: transparent;
+            color: #00ff88;
+            cursor: pointer;
+            font-size: 0.9em;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .btn-randomize:hover {
+            background: #00ff88;
+            color: #000;
+        }
+
+        .btn-randomize.disabled {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 20px 0;
+        }
+
+        .rule-card {
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .rule-card:hover {
+            border-color: #00ff88;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 255, 136, 0.2);
+        }
+
+        .rule-number {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #00ff88;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            border-radius: 4px;
+            image-rendering: pixelated;
+        }
+
+        .metrics {
+            margin-top: 8px;
+            font-size: 0.7em;
+            color: #999;
+            line-height: 1.6;
+        }
+
+        .metrics .metric-label {
+            color: #777;
+        }
+
+        .metrics .metric-value {
+            color: #bbb;
+        }
+
+        .wolfram-class {
+            display: inline-block;
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        .class-I { background: #1a3a1a; color: #4caf50; }
+        .class-II { background: #1a2a3a; color: #42a5f5; }
+        .class-III { background: #3a1a1a; color: #ef5350; }
+        .class-IV { background: #3a2a1a; color: #ffa726; }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 40px 20px;
+            overflow-y: auto;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 800px;
+            width: 100%;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: #999;
+            font-size: 1.5em;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+
+        .modal-close:hover {
+            background: #333;
+            color: #fff;
+        }
+
+        .modal-title {
+            font-size: 1.8em;
+            color: #00ff88;
+            margin-bottom: 5px;
+        }
+
+        .modal-binary {
+            font-size: 0.9em;
+            color: #888;
+            margin-bottom: 20px;
+            font-family: monospace;
+        }
+
+        .modal-canvas-container {
+            margin-bottom: 20px;
+        }
+
+        .modal-canvas-container canvas {
+            max-width: 512px;
+            margin: 0 auto;
+        }
+
+        .modal-section {
+            margin-bottom: 20px;
+        }
+
+        .modal-section h3 {
+            font-size: 1.1em;
+            color: #00ff88;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 5px;
+        }
+
+        .metrics-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .metrics-table td {
+            padding: 6px 12px;
+            border-bottom: 1px solid #222;
+        }
+
+        .metrics-table td:first-child {
+            color: #999;
+            width: 50%;
+        }
+
+        .metrics-table td:last-child {
+            color: #e0e0e0;
+            font-family: monospace;
+        }
+
+        .truth-table {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .truth-entry {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 8px;
+            background: #222;
+            border-radius: 6px;
+            min-width: 60px;
+        }
+
+        .neighborhood {
+            display: flex;
+            gap: 2px;
+        }
+
+        .neighborhood .cell {
+            width: 14px;
+            height: 14px;
+            border: 1px solid #555;
+            border-radius: 2px;
+        }
+
+        .neighborhood .cell.alive {
+            background: #e0e0e0;
+        }
+
+        .neighborhood .cell.dead {
+            background: #222;
+        }
+
+        .truth-arrow {
+            color: #666;
+            font-size: 0.8em;
+        }
+
+        .output-cell {
+            width: 14px;
+            height: 14px;
+            border: 1px solid #555;
+            border-radius: 2px;
+        }
+
+        .output-cell.alive {
+            background: #00ff88;
+        }
+
+        .output-cell.dead {
+            background: #333;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>1D Cellular Automata Explorer</h1>
+    </header>
+
+    <div class="controls">
+        <label>Initial Config:</label>
+        <div class="btn-group" id="modeToggle">
+            <button class="active" data-mode="center">Center Cell</button>
+            <button data-mode="random">Random</button>
+        </div>
+
+        <div class="density-control disabled" id="densityControl">
+            <label>Density:</label>
+            <input type="range" id="densitySlider" min="0" max="100" value="50">
+            <span class="density-value" id="densityValue">50%</span>
+        </div>
+
+        <button class="btn-randomize disabled" id="randomizeBtn">Randomize</button>
+    </div>
+
+    <div class="grid-container" id="grid"></div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modal">
+        <div class="modal-content" id="modalContent">
+            <button class="modal-close" id="modalClose">&times;</button>
+            <div class="modal-title" id="modalTitle"></div>
+            <div class="modal-binary" id="modalBinary"></div>
+            <div class="modal-canvas-container">
+                <canvas id="modalCanvas"></canvas>
+            </div>
+            <div class="modal-section">
+                <h3>Truth Table</h3>
+                <div class="truth-table" id="truthTable"></div>
+            </div>
+            <div class="modal-section">
+                <h3>Metrics</h3>
+                <table class="metrics-table" id="metricsTable">
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // CA ENGINE FUNCTIONS
+        // ============================================
+
+        function ruleToLookupTable(ruleNumber) {
+            const table = {};
+            for (let i = 0; i < 8; i++) {
+                table[i] = (ruleNumber >> i) & 1;
+            }
+            return table;
+        }
+
+        function evolveRow(row, lookupTable) {
+            const n = row.length;
+            const nextRow = new Array(n);
+            for (let i = 0; i < n; i++) {
+                const left = row[(i - 1 + n) % n];
+                const center = row[i];
+                const right = row[(i + 1) % n];
+                const neighborhood = (left << 2) | (center << 1) | right;
+                nextRow[i] = lookupTable[neighborhood];
+            }
+            return nextRow;
+        }
+
+        function generateGrid(ruleNumber, width, generations, initialConfig = null) {
+            const lookupTable = ruleToLookupTable(ruleNumber);
+            const grid = [];
+            if (!initialConfig) {
+                initialConfig = new Array(width).fill(0);
+                initialConfig[Math.floor(width / 2)] = 1;
+            }
+            grid.push([...initialConfig]);
+            for (let gen = 1; gen < generations; gen++) {
+                grid.push(evolveRow(grid[gen - 1], lookupTable));
+            }
+            return grid;
+        }
+
+        function generateCenterCell(width) {
+            const config = new Array(width).fill(0);
+            config[Math.floor(width / 2)] = 1;
+            return config;
+        }
+
+        function generateRandom(width, density) {
+            const config = new Array(width);
+            for (let i = 0; i < width; i++) {
+                config[i] = Math.random() < density ? 1 : 0;
+            }
+            return config;
+        }
+
+        // ============================================
+        // METRICS FUNCTIONS
+        // ============================================
+
+        function computeEntropy(grid) {
+            let ones = 0;
+            let total = 0;
+            for (let y = 0; y < grid.length; y++) {
+                for (let x = 0; x < grid[y].length; x++) {
+                    if (grid[y][x] === 1) ones++;
+                    total++;
+                }
+            }
+            const p = ones / total;
+            if (p === 0 || p === 1) return 0;
+            return -p * Math.log2(p) - (1 - p) * Math.log2(1 - p);
+        }
+
+        function computeDensity(grid) {
+            let ones = 0;
+            let total = 0;
+            for (let y = 0; y < grid.length; y++) {
+                for (let x = 0; x < grid[y].length; x++) {
+                    if (grid[y][x] === 1) ones++;
+                    total++;
+                }
+            }
+            return ones / total;
+        }
+
+        function computeMeanField(grid) {
+            let sumDensity = 0;
+            for (let y = 0; y < grid.length; y++) {
+                let rowOnes = 0;
+                for (let x = 0; x < grid[y].length; x++) {
+                    if (grid[y][x] === 1) rowOnes++;
+                }
+                sumDensity += rowOnes / grid[y].length;
+            }
+            return sumDensity / grid.length;
+        }
+
+        function computeSymmetry(grid) {
+            let totalMatch = 0;
+            let totalCells = 0;
+            for (let y = 0; y < grid.length; y++) {
+                const row = grid[y];
+                const n = row.length;
+                for (let x = 0; x < n; x++) {
+                    if (row[x] === row[n - 1 - x]) totalMatch++;
+                    totalCells++;
+                }
+            }
+            return totalMatch / totalCells;
+        }
+
+        function computeLyapunov(ruleNumber, initialConfig, width, generations) {
+            // Run original and perturbed version
+            const perturbedConfig = [...initialConfig];
+            const flipIdx = Math.floor(width / 4); // Flip a cell away from center
+            perturbedConfig[flipIdx] = 1 - perturbedConfig[flipIdx];
+
+            const gridOriginal = generateGrid(ruleNumber, width, generations, initialConfig);
+            const gridPerturbed = generateGrid(ruleNumber, width, generations, perturbedConfig);
+
+            // Track Hamming distance growth
+            let sumLogRatio = 0;
+            let validGens = 0;
+
+            for (let gen = 1; gen < generations; gen++) {
+                let dist = 0;
+                for (let x = 0; x < width; x++) {
+                    if (gridOriginal[gen][x] !== gridPerturbed[gen][x]) dist++;
+                }
+
+                let prevDist = 0;
+                for (let x = 0; x < width; x++) {
+                    if (gridOriginal[gen - 1][x] !== gridPerturbed[gen - 1][x]) prevDist++;
+                }
+
+                if (prevDist > 0 && dist > 0) {
+                    sumLogRatio += Math.log(dist / prevDist);
+                    validGens++;
+                } else if (prevDist === 0 && dist > 0) {
+                    sumLogRatio += Math.log(dist);
+                    validGens++;
+                } else if (prevDist > 0 && dist === 0) {
+                    sumLogRatio += Math.log(0.5 / prevDist);
+                    validGens++;
+                }
+            }
+
+            return validGens > 0 ? sumLogRatio / validGens : 0;
+        }
+
+        function computeCompressibility(grid) {
+            // Run-length encoding comparison
+            let rawSize = 0;
+            let rleSize = 0;
+
+            for (let y = 0; y < grid.length; y++) {
+                const row = grid[y];
+                rawSize += row.length;
+
+                let runs = 1;
+                for (let x = 1; x < row.length; x++) {
+                    if (row[x] !== row[x - 1]) runs++;
+                }
+                rleSize += runs * 2; // Each run needs value + count
+            }
+
+            return 1 - (rleSize / rawSize);
+        }
+
+        function detectPeriod(grid) {
+            const rows = grid.length;
+            const lastRow = grid[rows - 1].join('');
+
+            // Check if last N rows repeat
+            for (let period = 1; period <= Math.floor(rows / 2); period++) {
+                let isPeriodic = true;
+                for (let offset = 0; offset < period && (rows - 1 - offset - period) >= 0; offset++) {
+                    const rowA = grid[rows - 1 - offset].join('');
+                    const rowB = grid[rows - 1 - offset - period].join('');
+                    if (rowA !== rowB) {
+                        isPeriodic = false;
+                        break;
+                    }
+                }
+                if (isPeriodic) return period;
+            }
+            return 'aperiodic';
+        }
+
+        function classifyWolfram(grid, entropy, density, symmetry) {
+            const rows = grid.length;
+            const cols = grid[0].length;
+
+            const rowDensities = [];
+            for (let y = 0; y < rows; y++) {
+                let ones = 0;
+                for (let x = 0; x < cols; x++) {
+                    if (grid[y][x] === 1) ones++;
+                }
+                rowDensities.push(ones / cols);
+            }
+
+            const meanDensity = rowDensities.reduce((a, b) => a + b, 0) / rowDensities.length;
+            const variance = rowDensities.reduce((acc, d) => acc + (d - meanDensity) ** 2, 0) / rowDensities.length;
+
+            // Check if last rows are truly uniform (all 0s or all 1s)
+            const lastRowAllSame = rowDensities[rows - 1] === 0 || rowDensities[rows - 1] === 1;
+            const secondLastAllSame = rowDensities[rows - 2] === 0 || rowDensities[rows - 2] === 1;
+            const convergedToUniform = lastRowAllSame && secondLastAllSame;
+
+            const period = detectPeriod(grid);
+            const hasPeriod = period !== 'aperiodic' && period <= 10;
+
+            // Class I: truly converges to homogeneous state (all 0s or all 1s)
+            if (convergedToUniform) return 'I';
+
+            // Class II: low entropy with periodic/static patterns (not uniform)
+            if (hasPeriod && entropy < 0.8) return 'II';
+            if (entropy < 0.3 && variance < 0.01) return 'II';
+
+            // Class III: very high entropy (>0.92), chaotic, aperiodic
+            if (entropy > 0.92 && !hasPeriod) return 'III';
+
+            // Class IV: moderate-to-high entropy with complex structure
+            if (entropy >= 0.5 && entropy <= 0.92 && !hasPeriod) return 'IV';
+
+            // Remaining high entropy cases
+            if (entropy > 0.8) return 'III';
+
+            // Fallback
+            if (entropy < 0.5) return 'II';
+            return 'III';
+        }
+
+        function computeAllMetrics(ruleNumber, grid, initialConfig) {
+            const entropy = computeEntropy(grid);
+            const density = computeDensity(grid);
+            const meanField = computeMeanField(grid);
+            const symmetry = computeSymmetry(grid);
+            const lyapunov = computeLyapunov(ruleNumber, initialConfig, grid[0].length, grid.length);
+            const compressibility = computeCompressibility(grid);
+            const period = detectPeriod(grid);
+            const wolframClass = classifyWolfram(grid, entropy, density, symmetry);
+
+            return {
+                entropy,
+                density,
+                meanField,
+                symmetry,
+                lyapunov,
+                compressibility,
+                period,
+                wolframClass
+            };
+        }
+
+        // ============================================
+        // RENDERING FUNCTIONS
+        // ============================================
+
+        function renderToCanvas(grid, canvas) {
+            const rows = grid.length;
+            const cols = grid[0].length;
+
+            canvas.width = cols;
+            canvas.height = rows;
+
+            const ctx = canvas.getContext('2d');
+            const imageData = ctx.createImageData(cols, rows);
+            const data = imageData.data;
+
+            for (let y = 0; y < rows; y++) {
+                for (let x = 0; x < cols; x++) {
+                    const idx = (y * cols + x) * 4;
+                    const value = grid[y][x] === 1 ? 0 : 255;
+                    data[idx] = value;
+                    data[idx + 1] = value;
+                    data[idx + 2] = value;
+                    data[idx + 3] = 255;
+                }
+            }
+
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        function formatMetricsHTML(m) {
+            const classColors = { I: 'class-I', II: 'class-II', III: 'class-III', IV: 'class-IV' };
+            return `<span class="wolfram-class ${classColors[m.wolframClass]}">Class ${m.wolframClass}</span>` +
+                   ` | <span class="metric-label">Entropy:</span> <span class="metric-value">${m.entropy.toFixed(3)}</span>` +
+                   ` | <span class="metric-label">Density:</span> <span class="metric-value">${(m.density * 100).toFixed(1)}%</span>` +
+                   `<br><span class="metric-label">Symmetry:</span> <span class="metric-value">${m.symmetry.toFixed(2)}</span>` +
+                   ` | <span class="metric-label">Period:</span> <span class="metric-value">${m.period}</span>`;
+        }
+
+        // ============================================
+        // MODAL FUNCTIONS
+        // ============================================
+
+        function openModal(ruleNumber) {
+            const modal = document.getElementById('modal');
+            const initialConfig = currentMode === 'center'
+                ? generateCenterCell(512)
+                : generateRandom(512, currentDensity);
+            const grid = generateGrid(ruleNumber, 512, 512, initialConfig);
+
+            // Title and binary
+            document.getElementById('modalTitle').textContent = 'Rule ' + ruleNumber;
+            document.getElementById('modalBinary').textContent =
+                'Binary: ' + ruleNumber.toString(2).padStart(8, '0');
+
+            // Canvas
+            const canvas = document.getElementById('modalCanvas');
+            renderToCanvas(grid, canvas);
+
+            // Truth table
+            const truthTable = document.getElementById('truthTable');
+            truthTable.innerHTML = '';
+            const lookup = ruleToLookupTable(ruleNumber);
+
+            for (let i = 7; i >= 0; i--) {
+                const entry = document.createElement('div');
+                entry.className = 'truth-entry';
+
+                const neighborhood = document.createElement('div');
+                neighborhood.className = 'neighborhood';
+
+                for (let bit = 2; bit >= 0; bit--) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell ' + ((i >> bit) & 1 ? 'alive' : 'dead');
+                    neighborhood.appendChild(cell);
+                }
+
+                const arrow = document.createElement('div');
+                arrow.className = 'truth-arrow';
+                arrow.textContent = '\u2193';
+
+                const output = document.createElement('div');
+                output.className = 'output-cell ' + (lookup[i] ? 'alive' : 'dead');
+
+                entry.appendChild(neighborhood);
+                entry.appendChild(arrow);
+                entry.appendChild(output);
+                truthTable.appendChild(entry);
+            }
+
+            // Metrics table
+            const metricsBody = document.getElementById('metricsTable').querySelector('tbody') ||
+                               document.getElementById('metricsTable');
+
+            // Use 128x128 grid for metrics consistency with cards
+            const smallInit = currentMode === 'center' ? null : generateRandom(GRID_SIZE, currentDensity);
+            const smallGrid = generateGrid(ruleNumber, GRID_SIZE, GENERATIONS, smallInit);
+            const m = computeAllMetrics(ruleNumber, smallGrid, smallInit || generateCenterCell(GRID_SIZE));
+
+            metricsBody.innerHTML = `
+                <tr><td>Shannon Entropy</td><td>${m.entropy.toFixed(4)}</td></tr>
+                <tr><td>Density</td><td>${(m.density * 100).toFixed(2)}%</td></tr>
+                <tr><td>Mean Field</td><td>${m.meanField.toFixed(4)}</td></tr>
+                <tr><td>Wolfram Class</td><td><span class="wolfram-class ${({I:'class-I',II:'class-II',III:'class-III',IV:'class-IV'})[m.wolframClass]}">Class ${m.wolframClass}</span></td></tr>
+                <tr><td>Symmetry Score</td><td>${m.symmetry.toFixed(4)}</td></tr>
+                <tr><td>Lyapunov Exponent</td><td>${m.lyapunov.toFixed(4)}</td></tr>
+                <tr><td>Compressibility</td><td>${m.compressibility.toFixed(4)}</td></tr>
+                <tr><td>Period</td><td>${m.period}</td></tr>
+            `;
+
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+
+        // ============================================
+        // MAIN APPLICATION
+        // ============================================
+
+        const GRID_SIZE = 128;
+        const GENERATIONS = 128;
+        const CHUNK_SIZE = 16;
+
+        let currentMode = 'center';
+        let currentDensity = 0.5;
+
+        function createCard(rule) {
+            const card = document.createElement('div');
+            card.className = 'rule-card';
+            card.dataset.rule = rule;
+
+            const ruleLabel = document.createElement('div');
+            ruleLabel.className = 'rule-number';
+            ruleLabel.textContent = 'Rule ' + rule;
+            card.appendChild(ruleLabel);
+
+            const canvas = document.createElement('canvas');
+            card.appendChild(canvas);
+
+            const metrics = document.createElement('div');
+            metrics.className = 'metrics';
+            card.appendChild(metrics);
+
+            card.addEventListener('click', function() {
+                openModal(parseInt(this.dataset.rule));
+            });
+
+            return card;
+        }
+
+        function renderRuleCard(card) {
+            const rule = parseInt(card.dataset.rule);
+            const canvas = card.querySelector('canvas');
+            const metricsDiv = card.querySelector('.metrics');
+
+            const initialConfig = currentMode === 'center' ? null : generateRandom(GRID_SIZE, currentDensity);
+            const grid = generateGrid(rule, GRID_SIZE, GENERATIONS, initialConfig);
+            renderToCanvas(grid, canvas);
+
+            // Compute and display metrics
+            const m = computeAllMetrics(rule, grid, initialConfig || generateCenterCell(GRID_SIZE));
+            metricsDiv.innerHTML = formatMetricsHTML(m);
+
+            return grid;
+        }
+
+        function renderAllRules(onComplete) {
+            const gridContainer = document.getElementById('grid');
+            gridContainer.innerHTML = '';
+
+            const cards = [];
+            for (let rule = 0; rule < 256; rule++) {
+                const card = createCard(rule);
+                gridContainer.appendChild(card);
+                cards.push(card);
+            }
+
+            let currentIndex = 0;
+
+            function renderChunk() {
+                const endIndex = Math.min(currentIndex + CHUNK_SIZE, 256);
+
+                for (let i = currentIndex; i < endIndex; i++) {
+                    renderRuleCard(cards[i]);
+                }
+
+                currentIndex = endIndex;
+
+                if (currentIndex < 256) {
+                    requestAnimationFrame(renderChunk);
+                } else if (onComplete) {
+                    onComplete();
+                }
+            }
+
+            requestAnimationFrame(renderChunk);
+        }
+
+        // ============================================
+        // UI CONTROLS
+        // ============================================
+
+        // Mode toggle
+        document.getElementById('modeToggle').addEventListener('click', function(e) {
+            if (e.target.tagName !== 'BUTTON') return;
+
+            this.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+
+            currentMode = e.target.dataset.mode;
+
+            const densityControl = document.getElementById('densityControl');
+            const randomizeBtn = document.getElementById('randomizeBtn');
+
+            if (currentMode === 'random') {
+                densityControl.classList.remove('disabled');
+                randomizeBtn.classList.remove('disabled');
+            } else {
+                densityControl.classList.add('disabled');
+                randomizeBtn.classList.add('disabled');
+            }
+
+            renderAllRules();
+        });
+
+        // Density slider
+        const densitySlider = document.getElementById('densitySlider');
+        const densityValue = document.getElementById('densityValue');
+
+        densitySlider.addEventListener('input', function() {
+            currentDensity = parseInt(this.value) / 100;
+            densityValue.textContent = this.value + '%';
+        });
+
+        // Randomize button
+        document.getElementById('randomizeBtn').addEventListener('click', function() {
+            if (currentMode === 'random') {
+                renderAllRules();
+            }
+        });
+
+        // Modal events
+        document.getElementById('modalClose').addEventListener('click', closeModal);
+
+        document.getElementById('modal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeModal();
+        });
+
+        // Initialize
+        renderAllRules();
+    </script>
+</body>
+</html>

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tab Navigation Tests</title>
+</head>
+<body>
+    <div id="test-results"></div>
+    <script>
+        const tests = [];
+        const results = [];
+
+        function test(name, fn) {
+            tests.push({ name, fn });
+        }
+
+        function assert(condition, message) {
+            if (!condition) {
+                throw new Error(message || 'Assertion failed');
+            }
+        }
+
+        function assertEqual(actual, expected, message) {
+            if (actual !== expected) {
+                throw new Error(`${message || 'Assertion failed'}: expected ${expected}, got ${actual}`);
+            }
+        }
+
+        function assertContains(str, substr, message) {
+            if (!str.includes(substr)) {
+                throw new Error(`${message || 'Assertion failed'}: "${str}" does not contain "${substr}"`);
+            }
+        }
+
+        async function runTests() {
+            console.log('Running tab navigation tests...\n');
+
+            for (const { name, fn } of tests) {
+                try {
+                    await fn();
+                    results.push({ name, passed: true });
+                    console.log(`✓ ${name}`);
+                } catch (error) {
+                    results.push({ name, passed: false, error: error.message });
+                    console.error(`✗ ${name}`);
+                    console.error(`  ${error.message}`);
+                }
+            }
+
+            const passed = results.filter(r => r.passed).length;
+            const failed = results.filter(r => !r.passed).length;
+            console.log(`\n${passed} passed, ${failed} failed out of ${tests.length} tests`);
+
+            const resultsEl = document.getElementById('test-results');
+            resultsEl.innerHTML = `
+                <h2>Test Results</h2>
+                <p>${passed} passed, ${failed} failed out of ${tests.length} tests</p>
+                <ul>${results.map(r =>
+                    `<li style="color: ${r.passed ? 'green' : 'red'}">${r.passed ? '✓' : '✗'} ${r.name}${r.error ? `: ${r.error}` : ''}</li>`
+                ).join('')}</ul>
+            `;
+
+            if (failed === 0) {
+                console.log('\n✓ All tab navigation tests passed!');
+                if (typeof process !== 'undefined') process.exit(0);
+            } else {
+                if (typeof process !== 'undefined') process.exit(1);
+            }
+        }
+
+        // Load the HTML file
+        async function loadPage() {
+            const response = await fetch('../src/v2-research-tools.html');
+            const html = await response.text();
+            const parser = new DOMParser();
+            return parser.parseFromString(html, 'text/html');
+        }
+
+        // Test Suite
+        test('Tab bar has exactly 4 tabs', async () => {
+            const doc = await loadPage();
+            const tabs = doc.querySelectorAll('.tab');
+            assertEqual(tabs.length, 4, 'Should have 4 tabs');
+        });
+
+        test('Tab names are correct', async () => {
+            const doc = await loadPage();
+            const tabs = doc.querySelectorAll('.tab');
+            const expectedNames = ['Grid View', 'Rule Map', 'Phase Explorer', 'Light Cones'];
+            tabs.forEach((tab, i) => {
+                assertContains(tab.textContent, expectedNames[i], `Tab ${i} should be "${expectedNames[i]}"`);
+            });
+        });
+
+        test('Tab bar uses dark theme styling', async () => {
+            const doc = await loadPage();
+            const style = doc.querySelector('style').textContent;
+            assertContains(style, '.tab-bar', 'Should have .tab-bar styles');
+            assertContains(style, '#1a1a1a', 'Should use dark background');
+            assertContains(style, '#00ff88', 'Should use green accent');
+        });
+
+        test('Active tab has distinct visual state', async () => {
+            const doc = await loadPage();
+            const style = doc.querySelector('style').textContent;
+            assertContains(style, '.tab.active', 'Should have .tab.active style');
+            assertContains(style, 'background: #00ff88', 'Active tab should have green background');
+        });
+
+        test('Exactly 4 tab panels exist', async () => {
+            const doc = await loadPage();
+            const panels = doc.querySelectorAll('.tab-panel');
+            assertEqual(panels.length, 4, 'Should have 4 tab panels');
+        });
+
+        test('Panel IDs match tab data attributes', async () => {
+            const doc = await loadPage();
+            const tabs = doc.querySelectorAll('.tab');
+            const panels = doc.querySelectorAll('.tab-panel');
+
+            tabs.forEach((tab, i) => {
+                const tabName = tab.getAttribute('data-tab');
+                const panelId = panels[i].id;
+                assertEqual(panelId, `panel-${tabName}`, `Panel ${i} ID should match tab data-tab`);
+            });
+        });
+
+        test('Grid View panel contains all v1 elements', async () => {
+            const doc = await loadPage();
+            const gridPanel = doc.getElementById('panel-grid');
+            assert(gridPanel, 'Grid View panel should exist');
+
+            const controls = gridPanel.querySelector('.controls');
+            assert(controls, 'Controls should exist in Grid View panel');
+
+            const gridContainer = gridPanel.querySelector('.grid-container');
+            assert(gridContainer, 'Grid container should exist in Grid View panel');
+        });
+
+        test('Placeholder panels have descriptive content', async () => {
+            const doc = await loadPage();
+
+            const mapPanel = doc.getElementById('panel-map');
+            assertContains(mapPanel.textContent, 'Rule Space Map', 'Map panel should have title');
+            assertContains(mapPanel.textContent, 'scatter plot', 'Map panel should describe content');
+
+            const phasePanel = doc.getElementById('panel-phase');
+            assertContains(phasePanel.textContent, 'Phase Transition', 'Phase panel should have title');
+
+            const lightconePanel = doc.getElementById('panel-lightcone');
+            assertContains(lightconePanel.textContent, 'Light Cones', 'Light cone panel should have title');
+        });
+
+        test('switchTab function exists', async () => {
+            const doc = await loadPage();
+            const scripts = doc.querySelectorAll('script');
+            let hasFunction = false;
+            scripts.forEach(script => {
+                if (script.textContent.includes('function switchTab')) {
+                    hasFunction = true;
+                }
+            });
+            assert(hasFunction, 'switchTab function should exist');
+        });
+
+        test('Hash routing handler exists', async () => {
+            const doc = await loadPage();
+            const scripts = doc.querySelectorAll('script');
+            let hasHashHandler = false;
+            scripts.forEach(script => {
+                if (script.textContent.includes('handleHashChange')) {
+                    hasHashHandler = true;
+                }
+            });
+            assert(hasHashHandler, 'handleHashChange function should exist');
+        });
+
+        test('Tab responsive layout exists', async () => {
+            const doc = await loadPage();
+            const style = doc.querySelector('style').textContent;
+            assertContains(style, '@media', 'Should have media query');
+            assertContains(style, '768px', 'Should have mobile breakpoint');
+        });
+
+        // Run tests
+        runTests();
+    </script>
+</body>
+</html>
