@@ -1,0 +1,67 @@
+v2 Sprint — 1D Cellular Automata Explorer
+==========================================
+Created: 2026-02-05
+
+## User Spec
+
+Build 4 new research features for the 1D CA Explorer (the "v2 core"):
+
+1. Rule Space Map — 2D scatter plot of all 256 rules by their metric values, color-coded
+   by Wolfram class, with selectable axes and click-to-open-modal.
+
+2. Phase Transition Explorer — For a selected rule, sweep initial density from 0% to 100%
+   and plot how each metric changes. Show as multi-series line chart with toggleable series
+   and critical-point markers.
+
+3. Block Entropy & Excess Entropy — Compute block entropy H(L) for L=1..8 along spatial
+   rows, derive entropy rate h and excess entropy E. Display on cards and modal, and plot
+   H(L) vs L curve in modal.
+
+4. Perturbation Light Cones — Flip one cell, compute the difference between original and
+   perturbed spacetime grids, render as a heatmap. Estimate propagation speed and cone
+   angle. Include a side-by-side comparison mode.
+
+## Design Decisions
+
+- Self-contained: No external dependencies. All charts built with inline SVG (scatter, line)
+  and Canvas (heatmap). No charting libraries.
+- Seed strategy: Rule Space Map uses center-cell initial config for deterministic, reproducible
+  metric values.
+- Block entropy direction: Spatial blocks along rows, averaged over all time steps. Standard
+  ECA literature approach.
+- Layout: Tabbed views (Grid View, Rule Map, Phase Explorer, Light Cones) with URL hash
+  routing for persistence.
+
+## Task Breakdown
+
+Total: 37 tasks across 6 categories
+
+- Tab Navigation & Layout:       5 tasks
+- Custom Charting Engine:         7 tasks
+- Rule Space Map:                 6 tasks
+- Phase Transition Explorer:      6 tasks
+- Block Entropy & Excess Entropy: 7 tasks
+- Perturbation Light Cones:       6 tasks
+
+## Project Context
+
+- Single self-contained HTML/CSS/JS file (src/index.html)
+- Existing engine: 256 elementary CA rules, 128x128 grids, 8 metrics, modal detail view
+- Existing rendering: Canvas with ImageData, chunked with requestAnimationFrame
+- Test infrastructure: JSDOM-based test runner and verification script
+
+## Codex Review Notes
+
+Codex was consulted for adversarial design review and flagged:
+- Performance risk with density sweeps (51 levels x 128x128 grids) — addressed via async
+  chunked computation with progress bar (task in Phase Transition Explorer category).
+- Block entropy definition ambiguity — resolved: spatial blocks along rows, H(L) averaged
+  over all time steps.
+- Metric determinism for rule map — resolved: always use center-cell initial config.
+- Perturbation wrap-around on periodic grid — noted as edge case in propagation speed
+  computation task.
+
+## Next Steps
+
+Begin implementation with Category 1 (Tab Navigation & Layout) and Category 2 (Custom
+Charting Engine) in parallel, as all feature categories depend on these infrastructure pieces.

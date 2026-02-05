@@ -1,0 +1,466 @@
+[
+  {
+    "category": "Tab Navigation & Layout",
+    "description": "Add tab bar HTML with 4 tabs (Grid View, Rule Map, Phase Explorer, Light Cones) styled to match the existing dark theme with green accent color",
+    "steps": [
+      "A horizontal tab bar appears between the header and the content area",
+      "Exactly 4 tabs are visible: 'Grid View', 'Rule Map', 'Phase Explorer', 'Light Cones'",
+      "Tab bar uses the same dark background (#1a1a1a) and green accent (#00ff88) as existing controls",
+      "Active tab is visually distinct (green text/border) from inactive tabs (gray)",
+      "Tab bar is responsive and does not overflow on narrow screens"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Tab Navigation & Layout",
+    "description": "Implement tab switching JS — clicking a tab shows its content panel, hides all others, and updates the active tab visual state",
+    "steps": [
+      "Clicking any tab shows only that tab's content panel",
+      "The previously active panel is hidden (display:none or similar)",
+      "The clicked tab gains the active visual state, all others lose it",
+      "No flicker or layout shift occurs during tab switch",
+      "Only one panel is visible at any given time"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Tab Navigation & Layout",
+    "description": "Wrap the existing grid view (header, controls, grid container) inside a tab panel div so it becomes the content of the 'Grid View' tab",
+    "steps": [
+      "The app loads with 'Grid View' tab active by default",
+      "All existing functionality (256 rule cards, mode toggle, density slider, randomize button, modal) works exactly as before",
+      "The controls bar and grid container are inside the Grid View panel",
+      "No visual regression compared to v1 when on the Grid View tab"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Tab Navigation & Layout",
+    "description": "Create empty placeholder panels for the 3 new tabs (Rule Map, Phase Explorer, Light Cones) with a descriptive loading/placeholder message",
+    "steps": [
+      "Clicking 'Rule Map' tab shows a panel with placeholder content",
+      "Clicking 'Phase Explorer' tab shows a panel with placeholder content",
+      "Clicking 'Light Cones' tab shows a panel with placeholder content",
+      "Each placeholder panel has a title and brief description of what will go there",
+      "Switching between all 4 tabs works correctly in any order"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Tab Navigation & Layout",
+    "description": "Add URL hash routing (#grid, #map, #phase, #lightcone) so the selected tab survives page reload",
+    "steps": [
+      "Navigating to the page with #map in the URL opens the Rule Map tab",
+      "Navigating with #phase opens Phase Explorer, #lightcone opens Light Cones",
+      "Navigating with #grid or no hash opens Grid View (default)",
+      "Clicking a tab updates the URL hash without a full page reload",
+      "Browser back/forward buttons switch between previously visited tabs"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Custom Charting Engine",
+    "description": "Create an SVG scatter plot renderer function that takes a data array of {x, y, label, color} objects and renders circles with axes and gridlines",
+    "steps": [
+      "Function accepts a container element, data array, and config (width, height, margins)",
+      "An SVG element is created with correct viewBox dimensions",
+      "Data points are rendered as circles at the correct (x, y) positions scaled to the plot area",
+      "Horizontal and vertical axes are drawn with gridlines",
+      "The plot handles edge cases: empty data, single point, all points at same x or y value",
+      "Points with different color values render in different fill colors"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Custom Charting Engine",
+    "description": "Add axis labels, tick marks, and value formatting to the scatter plot",
+    "steps": [
+      "X-axis and Y-axis have visible text labels (configurable strings)",
+      "Tick marks appear at sensible intervals (5-10 ticks per axis)",
+      "Tick values are formatted to appropriate precision (e.g., 0.00 for entropy, 1% for density)",
+      "Labels do not overlap with the plot area or get clipped",
+      "Tick positions auto-scale based on data range (min/max of actual values)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Custom Charting Engine",
+    "description": "Create an SVG line chart renderer function that takes an array of series [{name, color, points: [{x,y}]}] and renders line paths with axes",
+    "steps": [
+      "Function accepts a container element, series array, and config (width, height, margins)",
+      "Each series is rendered as a distinct colored SVG path (no fill, stroke only)",
+      "Axes scale to encompass the full range of all series' data",
+      "Multiple series can be rendered simultaneously without overlap issues",
+      "The chart handles edge cases: empty series, single point series, series with identical values"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Custom Charting Engine",
+    "description": "Add legend and series color coding to the line chart",
+    "steps": [
+      "A legend area shows each series' name next to a colored line sample",
+      "Legend colors match the actual line colors in the chart",
+      "Legend is positioned outside the plot area (top or right) and does not obscure data",
+      "Legend handles up to 10 series without visual overflow",
+      "Series names are readable and do not truncate"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Custom Charting Engine",
+    "description": "Create a Canvas heatmap renderer function that takes a 2D numeric matrix and maps values to a color gradient",
+    "steps": [
+      "Function accepts a canvas element, 2D array (rows x cols), and color config",
+      "Values are mapped linearly from min to max across the gradient (e.g., black → cyan → white)",
+      "Canvas dimensions match the matrix dimensions with pixelated rendering",
+      "A matrix of all zeros renders as uniform minimum color",
+      "A matrix of all ones renders as uniform maximum color",
+      "Mixed values show a visible gradient between min and max colors"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Custom Charting Engine",
+    "description": "Add a color scale bar legend for the heatmap showing the value-to-color mapping",
+    "steps": [
+      "A vertical or horizontal gradient bar is rendered next to the heatmap",
+      "The bar shows the full color range from min to max",
+      "Min and max values are labeled at the ends of the bar",
+      "At least one intermediate tick value is shown",
+      "The scale bar matches the actual gradient used in the heatmap"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Custom Charting Engine",
+    "description": "Add a hover tooltip system that shows data values on mouseover for scatter plot points and line chart data points",
+    "steps": [
+      "Hovering over a scatter plot circle shows a tooltip with the point's label and x/y values",
+      "Hovering over a line chart shows the nearest data point's x/y values",
+      "Tooltip appears near the cursor and stays within the SVG bounds",
+      "Tooltip disappears when the mouse moves away from the data point",
+      "Tooltip text is readable (light text on dark background, matching app theme)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Rule Space Map",
+    "description": "Precompute metrics for all 256 rules using center-cell initial config on page load and store in an array for instant access",
+    "steps": [
+      "An array of 256 objects is populated, each containing all 8 existing metrics plus rule number",
+      "Computation uses center-cell initial config (deterministic, same result every time)",
+      "Metrics use the same 128x128 grid and 128 generations as the card view",
+      "The precomputed array is accessible from the Rule Map tab's rendering code",
+      "Precomputation does not block the initial page render (runs async or after first paint)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Rule Space Map",
+    "description": "Build two dropdown selectors for choosing the X-axis and Y-axis metric (entropy, density, meanField, symmetry, lyapunov, compressibility)",
+    "steps": [
+      "Two <select> dropdowns appear in the Rule Map tab's controls area",
+      "Each dropdown lists all available numeric metrics as options",
+      "X-axis defaults to 'entropy', Y-axis defaults to 'lyapunov'",
+      "Changing either dropdown triggers a re-render of the scatter plot",
+      "The 'period' metric is excluded or handled specially since it can be 'aperiodic' (non-numeric)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Rule Space Map",
+    "description": "Render scatter plot of all 256 rules using the selected metric pair from the dropdowns",
+    "steps": [
+      "All 256 rules appear as dots on the scatter plot",
+      "X positions correspond to the selected X-axis metric values",
+      "Y positions correspond to the selected Y-axis metric values",
+      "Changing axis selections re-renders the plot with correct positions",
+      "The plot auto-scales axes to the actual data range with some padding",
+      "Axis labels update to reflect the selected metric names"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Rule Space Map",
+    "description": "Color-code scatter plot dots by Wolfram class (I=green, II=blue, III=red, IV=orange) and add a class legend",
+    "steps": [
+      "Class I rules appear as green dots",
+      "Class II rules appear as blue dots",
+      "Class III rules appear as red dots",
+      "Class IV rules appear as orange dots",
+      "A legend showing all 4 classes with their colors is visible on the plot",
+      "Colors match the existing class color scheme from the card view (.class-I through .class-IV)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Rule Space Map",
+    "description": "Add hover tooltip on scatter dots showing rule number and both metric values",
+    "steps": [
+      "Hovering over a dot shows 'Rule N' and both metric values with labels",
+      "The tooltip includes the Wolfram class of the rule",
+      "Tooltip values match the axis labels (e.g., 'Entropy: 0.923, Lyapunov: 1.24')",
+      "Tooltip appears near the hovered dot without going off-screen",
+      "Moving away from the dot hides the tooltip"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Rule Space Map",
+    "description": "Wire click on a scatter plot dot to open the existing rule detail modal",
+    "steps": [
+      "Clicking a dot opens the modal with the correct rule's detail view",
+      "The modal shows the same 512x512 rendering, truth table, and metrics as when clicking a card",
+      "The modal can be closed and the user returns to the Rule Map tab",
+      "Clicking different dots opens the correct rule each time",
+      "The modal uses center-cell initial config regardless of Grid View mode setting"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Phase Transition Explorer",
+    "description": "Build rule selector UI with a number input (0-255), increment/decrement buttons, and a 'random rule' button",
+    "steps": [
+      "A number input field accepts values 0-255 in the Phase Explorer tab",
+      "Increment (+) and decrement (-) buttons change the value by 1",
+      "Increment wraps from 255 to 0, decrement wraps from 0 to 255",
+      "A 'Random Rule' button sets the input to a random value 0-255",
+      "The input rejects non-numeric values and clamps to 0-255 range",
+      "Changing the rule triggers a new density sweep computation"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Phase Transition Explorer",
+    "description": "Implement density sweep engine — for the selected rule, run 51 density levels (0%, 2%, 4%...100%) and compute all metrics at each level",
+    "steps": [
+      "For the selected rule, 51 separate simulations are run with densities 0.00, 0.02, 0.04, ..., 1.00",
+      "Each simulation uses a random initial config at the given density on a 128x128 grid",
+      "All existing metrics (entropy, density, meanField, symmetry, lyapunov, compressibility) are computed per density level",
+      "Results are stored as an array of 51 objects with density + all metric values",
+      "The same random seed approach is used for each density level to reduce noise (seeded PRNG or averaged over 3 runs)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Phase Transition Explorer",
+    "description": "Render multi-series line chart with initial density on X-axis and each metric as a separate colored line",
+    "steps": [
+      "X-axis shows density from 0% to 100%",
+      "Each metric is plotted as a distinct colored line",
+      "The Y-axis auto-scales to accommodate all visible metric values",
+      "The chart updates when a new rule is selected and the sweep completes",
+      "Lines are smooth and continuous across the 51 data points",
+      "Metric names are shown in a legend matching their line colors"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Phase Transition Explorer",
+    "description": "Add checkboxes to toggle individual metric series visibility on/off in the phase chart",
+    "steps": [
+      "A row of labeled checkboxes appears near the chart, one per metric",
+      "All checkboxes are checked (visible) by default",
+      "Unchecking a metric hides its line from the chart",
+      "Re-checking a metric shows its line again",
+      "The Y-axis rescales when series are toggled to fit only visible data",
+      "Checkbox label colors match the corresponding line colors"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Phase Transition Explorer",
+    "description": "Mark critical density points — detect where metric derivatives are steepest and show as vertical dashed lines on the chart",
+    "steps": [
+      "For each visible metric, the density value with the largest absolute derivative is identified",
+      "A vertical dashed line is drawn at each critical density on the chart",
+      "The dashed line is colored to match the metric it belongs to",
+      "A small label near the line shows the density value (e.g., '34%')",
+      "Critical lines update when metric visibility is toggled",
+      "Rules with no sharp transitions (e.g., Class I) show no critical lines"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Phase Transition Explorer",
+    "description": "Add chunked async computation with a progress bar to prevent UI freeze during the density sweep",
+    "steps": [
+      "A progress bar is visible while the sweep is running",
+      "The progress bar fills from 0% to 100% as density levels are computed",
+      "The UI remains responsive during computation (tab switching, scrolling still work)",
+      "The chart renders incrementally as results come in, or all at once when complete",
+      "Starting a new sweep (changing rule) cancels any in-progress sweep",
+      "The progress bar disappears when computation is complete"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Block Entropy & Excess Entropy",
+    "description": "Implement block frequency counter — given a row array, count occurrences of all length-L binary patterns for L=1..8",
+    "steps": [
+      "Function accepts a binary row (array of 0/1) and block length L",
+      "Returns a Map or object mapping each L-length binary pattern to its count",
+      "For L=1, counts of 0s and 1s match a simple tally of the row",
+      "For L=2, the 4 patterns (00, 01, 10, 11) are counted correctly with wrap-around",
+      "Total count of all patterns equals the row length (sliding window with wrap)",
+      "Works correctly for L=8 (256 possible patterns) on a 128-cell row"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Block Entropy & Excess Entropy",
+    "description": "Implement H(L) computation — Shannon entropy from block frequencies, averaged across all rows of the spacetime grid",
+    "steps": [
+      "For each row in the grid, block frequencies at length L are computed and Shannon entropy calculated",
+      "The per-row entropies are averaged to produce H(L)",
+      "H(1) matches or closely approximates the existing computeEntropy function",
+      "H(L) is computed for L=1 through L=8, producing an array of 8 values",
+      "H(L) is monotonically non-decreasing (H(L+1) >= H(L))",
+      "For a grid of all zeros, H(L) = 0 for all L"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Block Entropy & Excess Entropy",
+    "description": "Implement entropy rate h estimation — compute as H(L) - H(L-1) for the largest L values, or as the slope of a linear fit to H(L) vs L",
+    "steps": [
+      "Entropy rate h is computed from the H(L) array",
+      "h is approximated as the average of H(L) - H(L-1) for L=6,7,8 (converged region)",
+      "For a completely random grid, h is close to 1.0 (1 bit per cell)",
+      "For a periodic/static grid (e.g., Rule 0), h is close to 0.0",
+      "h is always non-negative",
+      "Value is returned as a single float"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Block Entropy & Excess Entropy",
+    "description": "Implement excess entropy E — compute as the y-intercept of the linear extrapolation of H(L) vs L from the converged region",
+    "steps": [
+      "Excess entropy E is derived from H(L) and the entropy rate h",
+      "E is computed as the average of (H(L) - h*L) for large L values",
+      "For a completely random grid, E is close to 0 (no structure beyond randomness)",
+      "For a structured/complex rule (e.g., Rule 110), E is positive and measurably different from random rules",
+      "E is always non-negative (or clamp to 0 if numerical noise makes it slightly negative)",
+      "Value is returned as a single float"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Block Entropy & Excess Entropy",
+    "description": "Integrate blockEntropy (H(L) array), entropyRate, and excessEntropy into the computeAllMetrics return object",
+    "steps": [
+      "computeAllMetrics now returns blockEntropy (array of 8 floats), entropyRate (float), and excessEntropy (float)",
+      "Existing metrics (entropy, density, meanField, etc.) are unchanged",
+      "All 256 rules' cards still render correctly with the expanded metrics object",
+      "The precomputed metrics array for the Rule Space Map includes the new fields",
+      "No performance regression — adding block entropy computation does not noticeably slow card rendering"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Block Entropy & Excess Entropy",
+    "description": "Display entropy rate and excess entropy on rule cards and in the modal metrics table",
+    "steps": [
+      "Each rule card's metrics area shows entropy rate (e.g., 'h: 0.834')",
+      "Each rule card's metrics area shows excess entropy (e.g., 'E: 0.12')",
+      "The modal metrics table includes rows for 'Entropy Rate' and 'Excess Entropy' with 4 decimal places",
+      "Values are consistent between card and modal for the same rule",
+      "Class III rules show high entropy rate (~1.0) and low excess entropy (~0.0)",
+      "Class IV rules show moderate entropy rate and higher excess entropy than Class III"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Block Entropy & Excess Entropy",
+    "description": "Add H(L) vs L line plot in the modal detail view showing the block entropy curve with annotated entropy rate slope and excess entropy intercept",
+    "steps": [
+      "A small line chart appears in the modal showing H(L) on Y-axis, L (1-8) on X-axis",
+      "The 8 data points are plotted and connected with a line",
+      "A dashed line showing the linear fit (slope = h, intercept = E) is overlaid",
+      "The entropy rate h and excess entropy E values are annotated on the chart",
+      "The chart is labeled 'Block Entropy' and fits within the modal layout",
+      "The chart uses the same dark theme styling as the rest of the app"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Perturbation Light Cones",
+    "description": "Build rule selector and flip position controls — rule number input and cell position selector with center-cell default",
+    "steps": [
+      "A rule number input (0-255) with +/- buttons appears in the Light Cones tab",
+      "A cell position input or slider allows choosing which cell to flip (0 to width-1)",
+      "Default flip position is the center cell (cell 64 for 128-wide grid)",
+      "Both controls validate input ranges and reject invalid values",
+      "Changing either control triggers a new perturbation computation",
+      "A 'Random Rule' button is available for quick exploration"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Perturbation Light Cones",
+    "description": "Implement perturbation engine — run original and single-cell-flipped grids, compute the absolute difference matrix",
+    "steps": [
+      "Original grid is generated with center-cell initial config for the selected rule",
+      "Perturbed grid is generated with one additional cell flipped at the selected position",
+      "A difference matrix is computed: diff[y][x] = |original[y][x] - perturbed[y][x]|",
+      "The difference matrix has the same dimensions as the grids (128x128)",
+      "For Rule 0 (all cells die), the difference matrix is all zeros after generation 1",
+      "For Rule 30 (chaotic), the difference matrix shows an expanding cone of 1s"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Perturbation Light Cones",
+    "description": "Render the difference matrix as a Canvas heatmap using the heatmap charting primitive (0=black, 1=bright cyan/green)",
+    "steps": [
+      "The difference matrix is rendered on a canvas with pixelated rendering",
+      "Cells where original equals perturbed (diff=0) are black",
+      "Cells where original differs from perturbed (diff=1) are a bright color (cyan or green)",
+      "The heatmap has the same pixel-art aesthetic as the existing CA grid renders",
+      "The canvas is sized appropriately within the Light Cones tab panel",
+      "A color scale bar is shown indicating 0 (no difference) to 1 (different)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Perturbation Light Cones",
+    "description": "Estimate propagation speed — at each generation find the leftmost and rightmost differing cells and compute the cone slope in cells per generation",
+    "steps": [
+      "For each row (generation) in the difference matrix, the leftmost and rightmost non-zero cells are found",
+      "The spread width (rightmost - leftmost) is tracked over generations",
+      "Propagation speed is computed as the average rate of spread increase per generation",
+      "Speed is expressed in cells/generation (e.g., 1.0 means the cone expands by 1 cell per side per step)",
+      "Maximum possible speed is 1.0 cell/generation (the light speed of ECA)",
+      "Periodic boundary wrap-around is handled correctly when the cone reaches grid edges"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Perturbation Light Cones",
+    "description": "Display propagation speed metric and cone angle alongside the heatmap",
+    "steps": [
+      "Propagation speed is shown as a labeled value next to the heatmap (e.g., 'Speed: 0.87 cells/gen')",
+      "Cone angle is derived from speed and displayed (e.g., 'Cone angle: 41°')",
+      "A qualitative label is shown: 'maximal' for speed ~1.0, 'moderate' for 0.3-0.7, 'localized' for <0.3, 'none' for 0",
+      "Values update when the rule or flip position changes",
+      "For Class I rules (converge to uniform), speed shows as 0 or near-0",
+      "For Class III rules (chaotic), speed shows as close to 1.0"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Perturbation Light Cones",
+    "description": "Add 'compare two rules' mode — show two light cone heatmaps side-by-side for visual comparison",
+    "steps": [
+      "A toggle or button switches between single-rule and comparison mode",
+      "In comparison mode, two rule selectors are visible (Rule A and Rule B)",
+      "Two heatmaps render side-by-side with equal dimensions",
+      "Each heatmap has its own propagation speed and cone angle displayed below it",
+      "Rule labels are clearly shown above each heatmap (e.g., 'Rule 30' vs 'Rule 110')",
+      "Both heatmaps use the same flip position for a fair comparison"
+    ],
+    "passes": false
+  }
+]
