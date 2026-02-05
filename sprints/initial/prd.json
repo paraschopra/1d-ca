@@ -1,0 +1,239 @@
+[
+  {
+    "category": "Core CA Engine",
+    "description": "Implement rule-to-lookup-table converter: given a rule number (0-255), produce an 8-entry lookup table mapping each 3-cell neighborhood (000 through 111) to the output cell value (0 or 1). The rule number's binary representation directly encodes these 8 outputs.",
+    "steps": [
+      "Call the converter with rule 30 and verify the lookup table is {0:0, 1:1, 2:1, 3:1, 4:1, 5:0, 6:0, 7:0} (indices represent the decimal value of the 3-bit neighborhood)",
+      "Call with rule 0 and verify all 8 entries are 0",
+      "Call with rule 255 and verify all 8 entries are 1",
+      "Call with rule 110 and verify the table matches the known Rule 110 mapping: {0:0, 1:1, 2:1, 3:1, 4:0, 5:1, 6:1, 7:0}",
+      "Verify the function handles edge cases: rule numbers exactly 0 and 255, and returns consistent results on repeated calls"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Core CA Engine",
+    "description": "Implement single-step evolution function: given a current row (array of 0s and 1s) and a lookup table, produce the next row. Use wrap-around (periodic) boundary conditions so the leftmost cell's left neighbor is the rightmost cell and vice versa.",
+    "steps": [
+      "Evolve a row of all 0s with any rule and verify the output depends correctly on the rule's entry for neighborhood 000",
+      "Evolve a row with a single 1 in the center using Rule 30's lookup table and verify the next row matches the known second generation of Rule 30",
+      "Verify wrap-around: place a 1 at position 0 of a width-8 row, evolve with Rule 30, and confirm the leftmost cell correctly uses the rightmost cell as its left neighbor",
+      "Verify wrap-around at right edge: place a 1 at the last position, evolve, and confirm the rightmost cell correctly uses position 0 as its right neighbor",
+      "Verify the output row has the same length as the input row"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Core CA Engine",
+    "description": "Implement full grid generation: given a rule number, grid width (128), and number of generations (128), produce a 2D array (128 rows x 128 columns) by repeatedly applying single-step evolution starting from the initial configuration.",
+    "steps": [
+      "Generate a 128x128 grid for Rule 30 starting from a single center cell and verify the grid has exactly 128 rows and 128 columns",
+      "Verify the first row of the grid matches the initial configuration (single 1 in center, rest 0s)",
+      "Verify row 1 of the grid matches the expected second generation of Rule 30 applied to the initial config",
+      "Generate grids for Rule 0 and Rule 255 and confirm expected trivial behavior (all-0 stays all-0 for Rule 0; single cell expands for Rule 255)",
+      "Verify the function accepts and correctly uses a custom initial configuration (random array of 0s and 1s)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Core CA Engine",
+    "description": "Implement initial configuration generators: (1) a single-center-cell generator that creates a row of all 0s with a single 1 at the center position, and (2) a random generator that accepts a density parameter (0.0 to 1.0) controlling the probability each cell is 1.",
+    "steps": [
+      "Generate a center-cell config of width 128 and verify only position 63 (0-indexed) is 1, all others are 0",
+      "Generate a center-cell config of odd width (e.g., 129) and verify position 64 is 1",
+      "Generate a random config of width 128 with density=0.5 and verify approximately 50% of cells are 1 (within reasonable statistical bounds over multiple runs)",
+      "Generate a random config with density=0.0 and verify all cells are 0",
+      "Generate a random config with density=1.0 and verify all cells are 1",
+      "Verify that two successive calls to the random generator produce different configurations (non-deterministic)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Canvas Rendering",
+    "description": "Create an HTML5 canvas element for each rule and implement a render function that takes a 128x128 grid (2D array) and draws it onto the canvas as black (alive) and white (dead) pixels. Each cell should map to a small square on the canvas.",
+    "steps": [
+      "Render a grid for Rule 30 (center cell init) onto a canvas and visually verify the classic Rule 30 triangle pattern appears",
+      "Render a grid of all 0s and verify the canvas is entirely white",
+      "Render a grid of all 1s and verify the canvas is entirely black",
+      "Verify the canvas dimensions accommodate the full 128x128 grid without clipping",
+      "Verify that cell boundaries are crisp with no anti-aliasing artifacts (use integer pixel coordinates)",
+      "Render multiple canvases (at least 10) and verify they all display correctly without visual glitches"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Canvas Rendering",
+    "description": "Add a visible rule number label above or below each canvas card. Style each card with a border, padding, and consistent spacing. The rule number should be prominent and readable.",
+    "steps": [
+      "Verify each card displays 'Rule N' where N is the correct rule number (0-255)",
+      "Verify the label is visually distinct from the canvas (different font size, positioned clearly above or below)",
+      "Verify cards have consistent padding, border, and margin across all 256 instances",
+      "Verify the rule number is readable at the default card size without zooming",
+      "Verify the styling does not overlap with or obscure the canvas rendering"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Canvas Rendering",
+    "description": "Implement efficient batch rendering for all 256 canvases. Use requestAnimationFrame or chunked rendering to avoid blocking the main thread. The page should remain responsive during initial render of all 256 automata.",
+    "steps": [
+      "Load the page and verify all 256 canvases render correctly (spot-check rules 0, 30, 90, 110, 184, 255)",
+      "During rendering, verify the page remains interactive (scrolling works, buttons are clickable)",
+      "Measure total render time from page load to all 256 canvases visible; verify it completes without the browser showing a 'page unresponsive' warning",
+      "Verify that no canvases are blank or missing after rendering completes",
+      "Refresh the page multiple times and verify consistent, complete rendering each time"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Metrics Computation",
+    "description": "Compute Shannon entropy of the cell distribution across the entire grid. Calculate the proportion of 1s (p) and 0s (1-p) across all cells in the grid, then compute H = -p*log2(p) - (1-p)*log2(1-p). Display as a decimal value (0.0 = uniform, 1.0 = maximum entropy).",
+    "steps": [
+      "Compute entropy for Rule 0 (all-zeros grid from center init) and verify it is 0.0",
+      "Compute entropy for a grid that is exactly 50% 1s and 50% 0s and verify it is 1.0",
+      "Compute entropy for Rule 30 (center init) and verify it falls between 0.0 and 1.0 (known to produce moderate-to-high entropy)",
+      "Verify the function handles edge cases: a grid of all 1s should return entropy 0.0",
+      "Verify entropy is displayed with at least 3 decimal places beneath the corresponding canvas card"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Metrics Computation",
+    "description": "Compute density (percentage of alive/1 cells across all generations) and mean field value (average density per row, then averaged across all rows). Display both as percentages or decimal values.",
+    "steps": [
+      "Compute density for an all-zeros grid and verify it is 0% (or 0.0)",
+      "Compute density for an all-ones grid and verify it is 100% (or 1.0)",
+      "Compute density for Rule 30 (center init) and verify it is a reasonable non-trivial value between 0 and 1",
+      "Compute mean field for Rule 30 and verify it represents the average row density (may differ from overall density if density changes over generations)",
+      "Verify both metrics are displayed beneath the canvas card with clear labels distinguishing them"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Metrics Computation",
+    "description": "Estimate Wolfram class (I through IV) using heuristics: Class I = very low entropy and converges to uniform state; Class II = low entropy with periodic patterns; Class III = high entropy, chaotic; Class IV = moderate entropy with complex/localized structures. Use entropy, density variance across rows, and periodicity signals to classify.",
+    "steps": [
+      "Classify Rule 0 and verify it is labeled Class I (converges to all-0s)",
+      "Classify Rule 4 and verify it is labeled Class II (simple periodic/static structures)",
+      "Classify Rule 30 and verify it is labeled Class III (chaotic)",
+      "Classify Rule 110 and verify it is labeled Class IV (complex/Turing-complete)",
+      "Verify the classification is displayed as 'Class I', 'Class II', 'Class III', or 'Class IV' beneath the canvas",
+      "Verify that the heuristic produces reasonable classifications for at least 10 well-known rules (spot check against published Wolfram class assignments)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Metrics Computation",
+    "description": "Compute symmetry score: measure left-right mirror similarity of the entire grid. For each row, compare it to its reverse and compute the fraction of matching cells. Average across all rows to get a symmetry score from 0.0 (no symmetry) to 1.0 (perfect mirror symmetry).",
+    "steps": [
+      "Compute symmetry for Rule 90 (center init) and verify it is 1.0 (Rule 90 produces a perfectly symmetric Sierpinski triangle)",
+      "Compute symmetry for Rule 30 (center init) and verify it is less than 1.0 (Rule 30 is known to be asymmetric)",
+      "Compute symmetry for an all-zeros grid and verify it is 1.0",
+      "Compute symmetry for a random initial config and verify the score is between 0.0 and 1.0",
+      "Verify the symmetry score is displayed with at least 2 decimal places beneath the canvas card"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Metrics Computation",
+    "description": "Compute three advanced metrics: (1) Lyapunov exponent estimate - run the same rule with the original init and a 1-bit-flipped copy, measure how the Hamming distance between the two grids grows over generations; (2) Compressibility ratio - compare the grid's raw size to its size after run-length encoding; (3) Period detection - check if the grid's last N rows repeat a pattern, report the period length or 'aperiodic'.",
+    "steps": [
+      "Compute Lyapunov exponent for Rule 30 and verify it is positive (chaotic divergence)",
+      "Compute Lyapunov exponent for Rule 0 and verify it is 0 or negative (perturbations die out)",
+      "Compute compressibility for an all-zeros grid and verify it is near 1.0 (highly compressible)",
+      "Compute compressibility for Rule 30 and verify it is significantly lower than 1.0 (less compressible)",
+      "Run period detection on Rule 4 (center init) and verify it detects a finite period",
+      "Run period detection on Rule 30 and verify it reports 'aperiodic' or a very long period",
+      "Verify all three metrics are displayed beneath the canvas with clear labels"
+    ],
+    "passes": false
+  },
+  {
+    "category": "UI Layout & Controls",
+    "description": "Create the HTML page structure: a header with title ('1D Cellular Automata Explorer'), a controls bar area below the header, and a responsive CSS Grid or Flexbox layout for the 256 rule cards. The grid should reflow based on viewport width (e.g., 4-8 cards per row on desktop, fewer on smaller screens).",
+    "steps": [
+      "Open the HTML file in a browser and verify the title '1D Cellular Automata Explorer' is visible in the header",
+      "Verify the controls area is positioned below the header and above the card grid",
+      "Verify the card grid displays cards in a responsive layout: resize the browser window and confirm cards reflow (more columns on wider screens, fewer on narrow)",
+      "Verify all 256 cards are present in the grid (scroll to the bottom)",
+      "Verify the page is a single self-contained HTML file with all CSS and JS inline (no external dependencies)",
+      "Verify the page has a reasonable default font and background color"
+    ],
+    "passes": false
+  },
+  {
+    "category": "UI Layout & Controls",
+    "description": "Implement global initial configuration toggle: a control (button group or radio) that switches between 'Center Cell' and 'Random' modes. When switched, all 256 automata regenerate with the selected initial configuration. Default should be 'Center Cell'.",
+    "steps": [
+      "Load the page and verify the default mode is 'Center Cell' and all automata show the single-center-cell pattern",
+      "Switch to 'Random' mode and verify all 256 automata regenerate with random initial configurations",
+      "Switch back to 'Center Cell' and verify all automata revert to the single-center-cell pattern",
+      "Verify the toggle visually indicates the currently active mode",
+      "Verify switching modes does not cause page freezing or unresponsiveness"
+    ],
+    "passes": false
+  },
+  {
+    "category": "UI Layout & Controls",
+    "description": "Implement a density slider that controls the probability of each cell being 1 in random initial configurations. The slider should range from 0% to 100% with a live label showing the current value. The slider should only be active/visible when 'Random' mode is selected.",
+    "steps": [
+      "Switch to Random mode and verify the density slider appears or becomes active",
+      "Move the slider to 10% and click Randomize; verify the initial rows are sparse (roughly 10% alive cells)",
+      "Move the slider to 90% and click Randomize; verify the initial rows are dense (roughly 90% alive cells)",
+      "Verify the slider label updates in real-time as the slider is dragged (shows current percentage)",
+      "Switch back to Center Cell mode and verify the slider is disabled or hidden",
+      "Verify the slider has sensible default value (e.g., 50%)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "UI Layout & Controls",
+    "description": "Add a 'Randomize' button that regenerates all 256 automata with fresh random initial configurations using the current density setting. Each click should produce new random patterns.",
+    "steps": [
+      "Switch to Random mode and click Randomize; verify all 256 canvases update with new patterns",
+      "Click Randomize again and verify the patterns differ from the previous click",
+      "Verify the Randomize button is clearly labeled and positioned in the controls area",
+      "Verify clicking Randomize while in Center Cell mode has no effect or switches to Random mode",
+      "Verify rapid repeated clicks of Randomize do not cause errors or broken rendering"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Expand/Detail View",
+    "description": "Implement click-to-expand functionality: clicking a rule card opens a modal or overlay showing a larger canvas (512x512 resolution) with the same rule's automaton rendered at higher detail. The modal should have a close button and clicking outside should dismiss it.",
+    "steps": [
+      "Click on Rule 30's card and verify a modal/overlay opens with a larger canvas showing Rule 30's pattern",
+      "Verify the expanded canvas is approximately 512x512 pixels and shows the same pattern as the card but at higher resolution",
+      "Click the close button and verify the modal dismisses",
+      "Click outside the modal content area and verify the modal dismisses",
+      "Verify pressing Escape key also dismisses the modal",
+      "Verify opening and closing multiple different rule modals in succession works without issues"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Expand/Detail View",
+    "description": "In the expanded modal view, display a detailed metrics table showing all computed metrics (entropy, density, mean field, Wolfram class, symmetry, Lyapunov exponent, compressibility, period) with labels and values. Also show the rule number in binary (8-bit) format.",
+    "steps": [
+      "Expand Rule 30 and verify all 8 metrics are displayed in a readable table format",
+      "Verify the rule number is shown in binary (e.g., Rule 30 = 00011110)",
+      "Verify metric values match what is shown on the card (same computation, just larger display)",
+      "Verify labels are clear and unambiguous (e.g., 'Shannon Entropy', not just 'H')",
+      "Expand Rule 0 and Rule 255 and verify their metrics display correctly"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Expand/Detail View",
+    "description": "In the expanded modal view, add a truth table visualization showing the rule's neighborhood mapping: display all 8 possible 3-cell neighborhoods (111, 110, 101, 100, 011, 010, 001, 000) and the corresponding output cell value. Show each neighborhood as a visual mini-grid (3 cells in a row) with the output cell below.",
+    "steps": [
+      "Expand Rule 30 and verify the truth table shows 8 neighborhoods with correct output values matching Rule 30's definition",
+      "Verify each neighborhood is displayed as a visual mini-grid (not just binary text) with filled/empty cells",
+      "Expand Rule 110 and verify the truth table matches Rule 110's known mapping",
+      "Expand Rule 0 and verify all 8 outputs are 0 (empty/white)",
+      "Expand Rule 255 and verify all 8 outputs are 1 (filled/black)",
+      "Verify the truth table is laid out clearly and does not overlap with the metrics table or canvas"
+    ],
+    "passes": false
+  }
+]

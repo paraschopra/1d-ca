@@ -1,0 +1,57 @@
+1D Cellular Automata Explorer - PRD Progress
+=============================================
+
+Generated: 2026-02-05
+Status: PRD created, ready for development
+
+User Specification (verbatim)
+-----------------------------
+"I want to explore all 256 rules of 1d cellular automata. so make a self contained html page
+with all of those starting with an on cell in the middle (but give me option an randomize
+initial configuration). underneath each compute various metrics such as entropy etc."
+
+Clarified Requirements
+----------------------
+- Single self-contained HTML file (all CSS/JS inline, no external dependencies)
+- All 256 elementary cellular automata rules displayed in a responsive grid of cards
+- Grid size: 128 columns x 128 generations per rule
+- Boundary conditions: Wrap-around (periodic)
+- Default initial config: Single center cell active
+- Alternative: Random initial config with density slider (0-100%)
+- Global "Randomize" button to regenerate all 256 with fresh random configs
+- Click any card to expand into a detailed modal view
+
+Metrics (Extended Set)
+----------------------
+- Shannon entropy
+- Density (% alive cells)
+- Mean field value
+- Wolfram class (I-IV, heuristic)
+- Symmetry score (left-right mirror)
+- Lyapunov exponent estimate
+- Compressibility ratio
+- Period detection
+
+Task Breakdown
+--------------
+Total tasks: 19
+
+By category:
+  1. Core CA Engine:        4 tasks (T1-T4)
+  2. Canvas Rendering:      3 tasks (T5-T7)
+  3. Metrics Computation:   5 tasks (T8-T12)
+  4. UI Layout & Controls:  4 tasks (T13-T16)
+  5. Expand/Detail View:    3 tasks (T17-T19)
+
+Project Context
+---------------
+- Language: HTML/CSS/JavaScript (vanilla, no frameworks)
+- Repository: learning-notebooks/1d-ca (fresh, no existing code)
+- Output: Single index.html file
+- Target: Modern browsers (Chrome, Firefox, Safari, Edge)
+
+Next Steps
+----------
+1. Begin development with /dev command, starting from Core CA Engine tasks
+2. Tasks should be completed in category order (engine -> rendering -> metrics -> UI -> detail view)
+3. Each task should be verified against its steps before marking as passed
