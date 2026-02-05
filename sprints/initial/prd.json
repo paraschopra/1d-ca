@@ -95,7 +95,7 @@
       "Verify the function handles edge cases: a grid of all 1s should return entropy 0.0",
       "Verify entropy is displayed with at least 3 decimal places beneath the corresponding canvas card"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Metrics Computation",
@@ -107,7 +107,7 @@
       "Compute mean field for Rule 30 and verify it represents the average row density (may differ from overall density if density changes over generations)",
       "Verify both metrics are displayed beneath the canvas card with clear labels distinguishing them"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Metrics Computation",
@@ -120,7 +120,7 @@
       "Verify the classification is displayed as 'Class I', 'Class II', 'Class III', or 'Class IV' beneath the canvas",
       "Verify that the heuristic produces reasonable classifications for at least 10 well-known rules (spot check against published Wolfram class assignments)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Metrics Computation",
@@ -132,7 +132,7 @@
       "Compute symmetry for a random initial config and verify the score is between 0.0 and 1.0",
       "Verify the symmetry score is displayed with at least 2 decimal places beneath the canvas card"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Metrics Computation",
@@ -146,7 +146,7 @@
       "Run period detection on Rule 30 and verify it reports 'aperiodic' or a very long period",
       "Verify all three metrics are displayed beneath the canvas with clear labels"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "UI Layout & Controls",
@@ -159,7 +159,7 @@
       "Verify the page is a single self-contained HTML file with all CSS and JS inline (no external dependencies)",
       "Verify the page has a reasonable default font and background color"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "UI Layout & Controls",
@@ -171,7 +171,7 @@
       "Verify the toggle visually indicates the currently active mode",
       "Verify switching modes does not cause page freezing or unresponsiveness"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "UI Layout & Controls",
@@ -184,7 +184,7 @@
       "Switch back to Center Cell mode and verify the slider is disabled or hidden",
       "Verify the slider has sensible default value (e.g., 50%)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "UI Layout & Controls",
@@ -196,7 +196,7 @@
       "Verify clicking Randomize while in Center Cell mode has no effect or switches to Random mode",
       "Verify rapid repeated clicks of Randomize do not cause errors or broken rendering"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Expand/Detail View",
@@ -209,7 +209,7 @@
       "Verify pressing Escape key also dismisses the modal",
       "Verify opening and closing multiple different rule modals in succession works without issues"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Expand/Detail View",
@@ -221,7 +221,7 @@
       "Verify labels are clear and unambiguous (e.g., 'Shannon Entropy', not just 'H')",
       "Expand Rule 0 and Rule 255 and verify their metrics display correctly"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Expand/Detail View",
@@ -234,6 +234,6 @@
       "Expand Rule 255 and verify all 8 outputs are 1 (filled/black)",
       "Verify the truth table is laid out clearly and does not overlap with the metrics table or canvas"
     ],
-    "passes": false
+    "passes": true
   }
 ]

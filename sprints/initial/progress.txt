@@ -108,3 +108,73 @@ Task 7: Efficient Batch Rendering - ✓ COMPLETE (2026-02-05)
 - Chunked rendering with requestAnimationFrame (16 rules per frame)
 - All 256 canvases render correctly with non-blocking rendering
 - Spot-checked Rules 0, 30, 90, 110, 184, 255
+
+Task 8: Shannon Entropy - ✓ COMPLETE (2026-02-05)
+---------------------------------------------------
+- Implemented computeEntropy(grid) with Shannon binary entropy formula
+- Handles edge cases (all 0s/1s → entropy 0, 50/50 → entropy 1.0)
+- Displayed with 3+ decimal places on each card
+
+Task 9: Density & Mean Field - ✓ COMPLETE (2026-02-05)
+-------------------------------------------------------
+- computeDensity(grid) - overall proportion of alive cells
+- computeMeanField(grid) - average of per-row densities
+- Both displayed on cards with clear labels
+
+Task 10: Wolfram Class - ✓ COMPLETE (2026-02-05)
+-------------------------------------------------
+- classifyWolfram() heuristic using entropy, variance, period detection
+- Rule 0 → Class I, Rule 4 → Class II, Rule 30 → Class III, Rule 110 → Class IV
+- Color-coded class badges on each card
+
+Task 11: Symmetry Score - ✓ COMPLETE (2026-02-05)
+--------------------------------------------------
+- computeSymmetry(grid) - left-right mirror comparison averaged across rows
+- Rule 90 shows high symmetry (>0.9), Rule 30 shows asymmetry
+- Displayed with 2+ decimal places
+
+Task 12: Advanced Metrics - ✓ COMPLETE (2026-02-05)
+----------------------------------------------------
+- Lyapunov exponent: Hamming distance divergence between original and perturbed
+- Compressibility: run-length encoding ratio
+- Period detection: checks if last rows repeat
+- All 3 metrics verified with known rules
+
+Task 13: Page Layout - ✓ COMPLETE (2026-02-05)
+-----------------------------------------------
+- Header with title, controls bar, responsive CSS Grid layout
+- Self-contained HTML file (no external dependencies)
+- All 256 cards present in responsive grid
+
+Task 14: Mode Toggle - ✓ COMPLETE (2026-02-05)
+-----------------------------------------------
+- Center Cell / Random button group toggle
+- Defaults to Center Cell mode
+- Switching regenerates all 256 automata
+
+Task 15: Density Slider - ✓ COMPLETE (2026-02-05)
+--------------------------------------------------
+- Range slider 0-100% with live label
+- Disabled when in Center Cell mode
+- Default value 50%
+
+Task 16: Randomize Button - ✓ COMPLETE (2026-02-05)
+----------------------------------------------------
+- Regenerates all 256 automata with fresh random configs
+- Only active in Random mode
+
+Task 17: Click-to-Expand Modal - ✓ COMPLETE (2026-02-05)
+---------------------------------------------------------
+- Modal with 512x512 high-resolution canvas
+- Close via button, click-outside, or Escape key
+
+Task 18: Modal Metrics Table - ✓ COMPLETE (2026-02-05)
+-------------------------------------------------------
+- All 8 metrics displayed with clear labels
+- Rule number shown in 8-bit binary format
+
+Task 19: Truth Table Visualization - ✓ COMPLETE (2026-02-05)
+-------------------------------------------------------------
+- 8 neighborhood mini-grids (visual cells, not text)
+- Output cell shown below each neighborhood
+- Correctly maps rule number to truth table

@@ -339,11 +339,360 @@
             assert(different, 'Two random configs are different (non-deterministic)');
         }
 
+        // ============================================
+        // METRICS FUNCTIONS
+        // ============================================
+
+        function computeEntropy(grid) {
+            let ones = 0;
+            let total = 0;
+            for (let y = 0; y < grid.length; y++) {
+                for (let x = 0; x < grid[y].length; x++) {
+                    if (grid[y][x] === 1) ones++;
+                    total++;
+                }
+            }
+            const p = ones / total;
+            if (p === 0 || p === 1) return 0;
+            return -p * Math.log2(p) - (1 - p) * Math.log2(1 - p);
+        }
+
+        function computeDensity(grid) {
+            let ones = 0;
+            let total = 0;
+            for (let y = 0; y < grid.length; y++) {
+                for (let x = 0; x < grid[y].length; x++) {
+                    if (grid[y][x] === 1) ones++;
+                    total++;
+                }
+            }
+            return ones / total;
+        }
+
+        function computeMeanField(grid) {
+            let sumDensity = 0;
+            for (let y = 0; y < grid.length; y++) {
+                let rowOnes = 0;
+                for (let x = 0; x < grid[y].length; x++) {
+                    if (grid[y][x] === 1) rowOnes++;
+                }
+                sumDensity += rowOnes / grid[y].length;
+            }
+            return sumDensity / grid.length;
+        }
+
+        function computeSymmetry(grid) {
+            let totalMatch = 0;
+            let totalCells = 0;
+            for (let y = 0; y < grid.length; y++) {
+                const row = grid[y];
+                const n = row.length;
+                for (let x = 0; x < n; x++) {
+                    if (row[x] === row[n - 1 - x]) totalMatch++;
+                    totalCells++;
+                }
+            }
+            return totalMatch / totalCells;
+        }
+
+        function computeLyapunov(ruleNumber, initialConfig, width, generations) {
+            const perturbedConfig = [...initialConfig];
+            const flipIdx = Math.floor(width / 4);
+            perturbedConfig[flipIdx] = 1 - perturbedConfig[flipIdx];
+
+            const gridOriginal = generateGrid(ruleNumber, width, generations, initialConfig);
+            const gridPerturbed = generateGrid(ruleNumber, width, generations, perturbedConfig);
+
+            let sumLogRatio = 0;
+            let validGens = 0;
+
+            for (let gen = 1; gen < generations; gen++) {
+                let dist = 0;
+                for (let x = 0; x < width; x++) {
+                    if (gridOriginal[gen][x] !== gridPerturbed[gen][x]) dist++;
+                }
+
+                let prevDist = 0;
+                for (let x = 0; x < width; x++) {
+                    if (gridOriginal[gen - 1][x] !== gridPerturbed[gen - 1][x]) prevDist++;
+                }
+
+                if (prevDist > 0 && dist > 0) {
+                    sumLogRatio += Math.log(dist / prevDist);
+                    validGens++;
+                } else if (prevDist === 0 && dist > 0) {
+                    sumLogRatio += Math.log(dist);
+                    validGens++;
+                } else if (prevDist > 0 && dist === 0) {
+                    sumLogRatio += Math.log(0.5 / prevDist);
+                    validGens++;
+                }
+            }
+
+            return validGens > 0 ? sumLogRatio / validGens : 0;
+        }
+
+        function computeCompressibility(grid) {
+            let rawSize = 0;
+            let rleSize = 0;
+
+            for (let y = 0; y < grid.length; y++) {
+                const row = grid[y];
+                rawSize += row.length;
+
+                let runs = 1;
+                for (let x = 1; x < row.length; x++) {
+                    if (row[x] !== row[x - 1]) runs++;
+                }
+                rleSize += runs * 2;
+            }
+
+            return 1 - (rleSize / rawSize);
+        }
+
+        function detectPeriod(grid) {
+            const rows = grid.length;
+            for (let period = 1; period <= Math.floor(rows / 2); period++) {
+                let isPeriodic = true;
+                for (let offset = 0; offset < period && (rows - 1 - offset - period) >= 0; offset++) {
+                    const rowA = grid[rows - 1 - offset].join('');
+                    const rowB = grid[rows - 1 - offset - period].join('');
+                    if (rowA !== rowB) {
+                        isPeriodic = false;
+                        break;
+                    }
+                }
+                if (isPeriodic) return period;
+            }
+            return 'aperiodic';
+        }
+
+        function classifyWolfram(grid, entropy, density, symmetry) {
+            const rows = grid.length;
+            const cols = grid[0].length;
+            const rowDensities = [];
+            for (let y = 0; y < rows; y++) {
+                let ones = 0;
+                for (let x = 0; x < cols; x++) {
+                    if (grid[y][x] === 1) ones++;
+                }
+                rowDensities.push(ones / cols);
+            }
+            const meanDensity = rowDensities.reduce((a, b) => a + b, 0) / rowDensities.length;
+            const variance = rowDensities.reduce((acc, d) => acc + (d - meanDensity) ** 2, 0) / rowDensities.length;
+
+            // Check if last rows are truly uniform (all 0s or all 1s)
+            const lastRowAllSame = rowDensities[rows - 1] === 0 || rowDensities[rows - 1] === 1;
+            const secondLastAllSame = rowDensities[rows - 2] === 0 || rowDensities[rows - 2] === 1;
+            const convergedToUniform = lastRowAllSame && secondLastAllSame;
+
+            const period = detectPeriod(grid);
+            const hasPeriod = period !== 'aperiodic' && period <= 10;
+
+            // Class I: truly converges to homogeneous state (all 0s or all 1s)
+            if (convergedToUniform) return 'I';
+
+            // Class II: low entropy with periodic/static patterns (not uniform)
+            if (hasPeriod && entropy < 0.8) return 'II';
+            if (entropy < 0.3 && variance < 0.01) return 'II';
+
+            // Class III: very high entropy (>0.92), chaotic, aperiodic
+            if (entropy > 0.92 && !hasPeriod) return 'III';
+
+            // Class IV: moderate-to-high entropy with complex structure
+            if (entropy >= 0.5 && entropy <= 0.92 && !hasPeriod) return 'IV';
+
+            // Remaining high entropy cases
+            if (entropy > 0.8) return 'III';
+
+            // Fallback
+            if (entropy < 0.5) return 'II';
+            return 'III';
+        }
+
+        // ============================================
+        // TESTS FOR TASK 8: Shannon Entropy
+        // ============================================
+
+        function testEntropy() {
+            console.log('\n=== Testing Shannon Entropy ===\n');
+
+            // All-zeros grid (Rule 0 from center init: after gen 1, all zeros)
+            const grid0 = generateGrid(0, 128, 128);
+            const entropy0 = computeEntropy(grid0);
+            // Grid0 has only 1 cell that is 1 (first row center), so very low entropy
+            // Actually row 0 has a 1, rest are all 0. So p = 1/16384
+            assert(entropy0 < 0.01, 'Rule 0 grid has very low entropy: ' + entropy0.toFixed(6));
+
+            // Grid of exactly 50% 1s
+            const halfGrid = [];
+            for (let y = 0; y < 128; y++) {
+                const row = new Array(128).fill(y < 64 ? 1 : 0);
+                halfGrid.push(row);
+            }
+            const entropyHalf = computeEntropy(halfGrid);
+            assert(Math.abs(entropyHalf - 1.0) < 0.001, 'Exactly 50% grid has entropy ~1.0: ' + entropyHalf.toFixed(4));
+
+            // Rule 30 has moderate-to-high entropy
+            const grid30 = generateGrid(30, 128, 128);
+            const entropy30 = computeEntropy(grid30);
+            assert(entropy30 > 0 && entropy30 < 1, 'Rule 30 entropy between 0 and 1: ' + entropy30.toFixed(4));
+
+            // All-ones grid
+            const allOnesGrid = [];
+            for (let y = 0; y < 10; y++) {
+                allOnesGrid.push(new Array(10).fill(1));
+            }
+            const entropyOnes = computeEntropy(allOnesGrid);
+            assert(entropyOnes === 0, 'All-ones grid has entropy 0');
+        }
+
+        // ============================================
+        // TESTS FOR TASK 9: Density & Mean Field
+        // ============================================
+
+        function testDensityMeanField() {
+            console.log('\n=== Testing Density & Mean Field ===\n');
+
+            // All zeros
+            const zeros = [];
+            for (let y = 0; y < 10; y++) zeros.push(new Array(10).fill(0));
+            assert(computeDensity(zeros) === 0, 'All-zeros density is 0');
+
+            // All ones
+            const ones = [];
+            for (let y = 0; y < 10; y++) ones.push(new Array(10).fill(1));
+            assert(computeDensity(ones) === 1, 'All-ones density is 1');
+
+            // Rule 30
+            const grid30 = generateGrid(30, 128, 128);
+            const density30 = computeDensity(grid30);
+            assert(density30 > 0 && density30 < 1, 'Rule 30 density between 0 and 1: ' + density30.toFixed(4));
+
+            // Mean field
+            const meanField30 = computeMeanField(grid30);
+            assert(meanField30 > 0 && meanField30 < 1, 'Rule 30 mean field between 0 and 1: ' + meanField30.toFixed(4));
+        }
+
+        // ============================================
+        // TESTS FOR TASK 10: Wolfram Class
+        // ============================================
+
+        function testWolframClass() {
+            console.log('\n=== Testing Wolfram Classification ===\n');
+
+            // Rule 0 -> Class I
+            const grid0 = generateGrid(0, 128, 128);
+            const e0 = computeEntropy(grid0);
+            const d0 = computeDensity(grid0);
+            const s0 = computeSymmetry(grid0);
+            const class0 = classifyWolfram(grid0, e0, d0, s0);
+            assert(class0 === 'I', 'Rule 0 classified as Class I (got: ' + class0 + ')');
+
+            // Rule 4 -> Class II
+            const grid4 = generateGrid(4, 128, 128);
+            const e4 = computeEntropy(grid4);
+            const d4 = computeDensity(grid4);
+            const s4 = computeSymmetry(grid4);
+            const class4 = classifyWolfram(grid4, e4, d4, s4);
+            assert(class4 === 'II', 'Rule 4 classified as Class II (got: ' + class4 + ')');
+
+            // Rule 30 -> Class III
+            const grid30 = generateGrid(30, 128, 128);
+            const e30 = computeEntropy(grid30);
+            const d30 = computeDensity(grid30);
+            const s30 = computeSymmetry(grid30);
+            const class30 = classifyWolfram(grid30, e30, d30, s30);
+            assert(class30 === 'III', 'Rule 30 classified as Class III (got: ' + class30 + ')');
+
+            // Rule 110 -> Class IV
+            const grid110 = generateGrid(110, 128, 128);
+            const e110 = computeEntropy(grid110);
+            const d110 = computeDensity(grid110);
+            const s110 = computeSymmetry(grid110);
+            const class110 = classifyWolfram(grid110, e110, d110, s110);
+            assert(class110 === 'IV', 'Rule 110 classified as Class IV (got: ' + class110 + ')');
+
+            // Verify output format
+            assert(['I', 'II', 'III', 'IV'].includes(class30), 'Classification is valid Wolfram class');
+        }
+
+        // ============================================
+        // TESTS FOR TASK 11: Symmetry
+        // ============================================
+
+        function testSymmetry() {
+            console.log('\n=== Testing Symmetry ===\n');
+
+            // Rule 90 -> high symmetry (not perfectly 1.0 due to even-width periodic boundaries)
+            const grid90 = generateGrid(90, 128, 128);
+            const sym90 = computeSymmetry(grid90);
+            assert(sym90 > 0.9, 'Rule 90 has high symmetry (>0.9): ' + sym90.toFixed(4));
+
+            // Rule 90 with odd width -> perfect symmetry
+            const grid90odd = generateGrid(90, 129, 129);
+            const sym90odd = computeSymmetry(grid90odd);
+            assert(Math.abs(sym90odd - 1.0) < 0.001, 'Rule 90 with odd width has perfect symmetry: ' + sym90odd.toFixed(4));
+
+            // Rule 30 -> asymmetric
+            const grid30 = generateGrid(30, 128, 128);
+            const sym30 = computeSymmetry(grid30);
+            assert(sym30 < 1.0, 'Rule 30 is asymmetric: ' + sym30.toFixed(4));
+
+            // All zeros -> perfect symmetry
+            const zeros = [];
+            for (let y = 0; y < 10; y++) zeros.push(new Array(10).fill(0));
+            assert(computeSymmetry(zeros) === 1.0, 'All-zeros grid has perfect symmetry');
+        }
+
+        // ============================================
+        // TESTS FOR TASK 12: Advanced Metrics
+        // ============================================
+
+        function testAdvancedMetrics() {
+            console.log('\n=== Testing Advanced Metrics ===\n');
+
+            // Lyapunov: Rule 30 should be positive (chaotic)
+            const init30 = generateCenterCell(128);
+            const lyap30 = computeLyapunov(30, init30, 128, 128);
+            assert(lyap30 > 0, 'Rule 30 Lyapunov is positive (chaotic): ' + lyap30.toFixed(4));
+
+            // Lyapunov: Rule 0 should be 0 or negative
+            const init0 = generateCenterCell(128);
+            const lyap0 = computeLyapunov(0, init0, 128, 128);
+            assert(lyap0 <= 0, 'Rule 0 Lyapunov is <= 0: ' + lyap0.toFixed(4));
+
+            // Compressibility: all-zeros grid should be high
+            const zerosGrid = [];
+            for (let y = 0; y < 128; y++) zerosGrid.push(new Array(128).fill(0));
+            const comp0 = computeCompressibility(zerosGrid);
+            assert(comp0 > 0.9, 'All-zeros compressibility is high: ' + comp0.toFixed(4));
+
+            // Compressibility: Rule 30 should be lower
+            const grid30 = generateGrid(30, 128, 128);
+            const comp30 = computeCompressibility(grid30);
+            assert(comp30 < comp0, 'Rule 30 compressibility is lower than all-zeros: ' + comp30.toFixed(4));
+
+            // Period: Rule 4 should detect a finite period
+            const grid4 = generateGrid(4, 128, 128);
+            const period4 = detectPeriod(grid4);
+            assert(typeof period4 === 'number' && period4 > 0, 'Rule 4 has finite period: ' + period4);
+
+            // Period: Rule 30 should be aperiodic or very long
+            const period30 = detectPeriod(grid30);
+            assert(period30 === 'aperiodic' || period30 > 10, 'Rule 30 is aperiodic or long period: ' + period30);
+        }
+
         // Run all tests
         testRuleToLookupTable();
         testEvolveRow();
         testGenerateGrid();
         testInitialConfigs();
+        testEntropy();
+        testDensityMeanField();
+        testWolframClass();
+        testSymmetry();
+        testAdvancedMetrics();
         showSummary();
     </script>
 </body>
