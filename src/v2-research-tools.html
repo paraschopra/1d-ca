@@ -519,8 +519,23 @@
                 For a selected rule, sweep initial density from 0% to 100% and plot how each metric changes.
                 Reveals phase transitions and critical points where rules undergo dramatic behavioral shifts.
             </p>
-            <div id="phase-demo-chart" style="margin-top: 20px;"></div>
         </div>
+        <div id="phase-controls" style="display: flex; gap: 15px; padding: 10px 20px; align-items: center; justify-content: center; font-family: monospace;">
+            <label style="color: #00ff88;">
+                Rule:
+                <button id="phaseRuleDec" style="background: #333; color: #eee; border: 1px solid #666; padding: 4px 8px; cursor: pointer;">−</button>
+                <input type="number" id="phaseRuleInput" min="0" max="255" value="30" style="background: #333; color: #eee; border: 1px solid #666; padding: 4px 8px; width: 60px; text-align: center; font-family: monospace;">
+                <button id="phaseRuleInc" style="background: #333; color: #eee; border: 1px solid #666; padding: 4px 8px; cursor: pointer;">+</button>
+            </label>
+            <button id="phaseRandomRule" style="background: #333; color: #00ff88; border: 1px solid #00ff88; padding: 6px 12px; cursor: pointer; font-family: monospace;">Random Rule</button>
+            <div id="phase-progress-container" style="display: none; flex: 1; max-width: 200px;">
+                <div style="background: #333; border-radius: 4px; height: 8px; overflow: hidden;">
+                    <div id="phase-progress-bar" style="background: #00ff88; height: 100%; width: 0%; transition: width 0.1s;"></div>
+                </div>
+            </div>
+        </div>
+        <div id="phase-metric-checkboxes" style="display: flex; gap: 12px; padding: 0 20px 10px; justify-content: center; font-family: monospace; flex-wrap: wrap;"></div>
+        <div id="phase-chart-container" style="text-align: center; padding: 10px;"></div>
     </div>
 
     <!-- Light Cones Panel -->
@@ -1218,6 +1233,7 @@
                 yText.setAttribute('text-anchor', 'end');
                 yText.setAttribute('fill', '#aaa');
                 yText.setAttribute('font-size', '10');
+                yText.setAttribute('data-axis', 'y');
                 yText.textContent = yValue.toFixed(2);
                 tickGroup.appendChild(yText);
             }
@@ -1278,6 +1294,7 @@
                     path.setAttribute('stroke', color);
                     path.setAttribute('stroke-width', '2');
                     path.setAttribute('data-series-name', name);
+                    path.setAttribute('data-series', name);
                     linesGroup.appendChild(path);
                 }
             });
@@ -1895,41 +1912,157 @@
         document.getElementById('xAxisMetric').addEventListener('change', renderRuleMap);
         document.getElementById('yAxisMetric').addEventListener('change', renderRuleMap);
 
-        // Demo line chart for Phase Explorer
-        const phaseChartContainer = document.getElementById('phase-demo-chart');
-        const phaseDemoSeries = [
-            {
-                name: 'Entropy',
-                color: '#ff6666',
-                points: Array.from({ length: 51 }, (_, i) => ({
-                    x: i / 50,
-                    y: 0.3 + 0.4 * Math.sin(i / 10) + 0.1 * Math.random()
-                }))
-            },
-            {
-                name: 'Density',
-                color: '#6666ff',
-                points: Array.from({ length: 51 }, (_, i) => ({
-                    x: i / 50,
-                    y: i / 50
-                }))
-            },
-            {
-                name: 'Lyapunov',
-                color: '#00ff88',
-                points: Array.from({ length: 51 }, (_, i) => ({
-                    x: i / 50,
-                    y: 0.5 + 0.3 * Math.tanh((i - 25) / 5)
-                }))
-            }
+        // Phase Transition Explorer — density sweep engine
+        const PHASE_METRICS = [
+            { key: 'entropy', name: 'Entropy', color: '#ff6666' },
+            { key: 'density', name: 'Density', color: '#6666ff' },
+            { key: 'meanField', name: 'Mean Field', color: '#ffcc00' },
+            { key: 'symmetry', name: 'Symmetry', color: '#cc66ff' },
+            { key: 'lyapunov', name: 'Lyapunov', color: '#00ff88' },
+            { key: 'compressibility', name: 'Compressibility', color: '#ff9966' }
         ];
 
-        createLineChart(phaseChartContainer, phaseDemoSeries, {
-            width: 800,
-            height: 400,
-            xLabel: 'Initial Density (demo)',
-            yLabel: 'Metric Value (demo)'
+        let phaseSweepCancelToken = { cancelled: false };
+        let lastSweepResults = null;
+        let lastSweepRule = null;
+
+        function runDensitySweep(ruleNumber) {
+            // Cancel any in-progress sweep
+            phaseSweepCancelToken.cancelled = true;
+            const token = { cancelled: false };
+            phaseSweepCancelToken = token;
+
+            const progressContainer = document.getElementById('phase-progress-container');
+            const progressBar = document.getElementById('phase-progress-bar');
+            const chartContainer = document.getElementById('phase-chart-container');
+
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+
+            const DENSITY_LEVELS = 51;
+            const results = new Array(DENSITY_LEVELS);
+            let levelIndex = 0;
+
+            return new Promise((resolve) => {
+                function computeChunk() {
+                    if (token.cancelled) { resolve(null); return; }
+
+                    const endIndex = Math.min(levelIndex + 3, DENSITY_LEVELS);
+                    for (let i = levelIndex; i < endIndex; i++) {
+                        const density = i / (DENSITY_LEVELS - 1);
+                        const initialConfig = generateRandom(GRID_SIZE, density);
+                        const grid = generateGrid(ruleNumber, GRID_SIZE, GENERATIONS, initialConfig);
+                        const metrics = computeAllMetrics(ruleNumber, grid, initialConfig);
+                        results[i] = { density, ...metrics };
+                    }
+
+                    levelIndex = endIndex;
+                    progressBar.style.width = `${(levelIndex / DENSITY_LEVELS * 100).toFixed(0)}%`;
+
+                    if (levelIndex < DENSITY_LEVELS) {
+                        requestAnimationFrame(computeChunk);
+                    } else {
+                        progressContainer.style.display = 'none';
+                        lastSweepResults = results;
+                        lastSweepRule = ruleNumber;
+                        renderPhaseChart(results, ruleNumber);
+                        resolve(results);
+                    }
+                }
+
+                requestAnimationFrame(computeChunk);
+            });
+        }
+
+        function getVisibleMetrics() {
+            const checkboxes = document.querySelectorAll('#phase-metric-checkboxes input[type="checkbox"]');
+            if (checkboxes.length === 0) return PHASE_METRICS; // No checkboxes yet, show all
+            return PHASE_METRICS.filter((m, i) => checkboxes[i] && checkboxes[i].checked);
+        }
+
+        function renderPhaseChart(results, ruleNumber) {
+            if (!results) return;
+            const chartContainer = document.getElementById('phase-chart-container');
+
+            const visibleMetrics = getVisibleMetrics();
+            const series = visibleMetrics.map(m => ({
+                name: m.name,
+                color: m.color,
+                points: results.map(r => ({ x: r.density, y: r[m.key] }))
+            }));
+
+            createLineChart(chartContainer, series, {
+                width: 800,
+                height: 450,
+                margins: { top: 20, right: 160, bottom: 50, left: 60 },
+                xLabel: 'Initial Density',
+                yLabel: 'Metric Value'
+            });
+        }
+
+        // Phase Explorer controls
+        const phaseRuleInput = document.getElementById('phaseRuleInput');
+
+        function getPhaseRule() {
+            return parseInt(phaseRuleInput.value) || 0;
+        }
+
+        function setPhaseRule(val) {
+            val = ((val % 256) + 256) % 256; // Wrap 0-255
+            phaseRuleInput.value = val;
+            runDensitySweep(val);
+        }
+
+        document.getElementById('phaseRuleDec').addEventListener('click', () => {
+            setPhaseRule(getPhaseRule() - 1);
         });
+
+        document.getElementById('phaseRuleInc').addEventListener('click', () => {
+            setPhaseRule(getPhaseRule() + 1);
+        });
+
+        document.getElementById('phaseRandomRule').addEventListener('click', () => {
+            setPhaseRule(Math.floor(Math.random() * 256));
+        });
+
+        phaseRuleInput.addEventListener('change', () => {
+            let val = parseInt(phaseRuleInput.value);
+            if (isNaN(val)) val = 0;
+            val = Math.max(0, Math.min(255, val));
+            phaseRuleInput.value = val;
+            runDensitySweep(val);
+        });
+
+        // Build metric visibility checkboxes
+        (function buildPhaseCheckboxes() {
+            const container = document.getElementById('phase-metric-checkboxes');
+            PHASE_METRICS.forEach((m, i) => {
+                const label = document.createElement('label');
+                label.style.color = m.color;
+                label.style.cursor = 'pointer';
+                label.style.display = 'flex';
+                label.style.alignItems = 'center';
+                label.style.gap = '4px';
+                label.style.fontSize = '13px';
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = true;
+                checkbox.dataset.metricIndex = i;
+                checkbox.addEventListener('change', () => {
+                    if (lastSweepResults) {
+                        renderPhaseChart(lastSweepResults, lastSweepRule);
+                    }
+                });
+
+                label.appendChild(checkbox);
+                label.appendChild(document.createTextNode(m.name));
+                container.appendChild(label);
+            });
+        })();
+
+        // Auto-run sweep for default rule when page loads
+        runDensitySweep(30);
     </script>
 </body>
 </html>

@@ -229,7 +229,7 @@
       "The input rejects non-numeric values and clamps to 0-255 range",
       "Changing the rule triggers a new density sweep computation"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Phase Transition Explorer",
@@ -241,7 +241,7 @@
       "Results are stored as an array of 51 objects with density + all metric values",
       "The same random seed approach is used for each density level to reduce noise (seeded PRNG or averaged over 3 runs)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Phase Transition Explorer",
@@ -254,7 +254,7 @@
       "Lines are smooth and continuous across the 51 data points",
       "Metric names are shown in a legend matching their line colors"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Phase Transition Explorer",
@@ -267,7 +267,7 @@
       "The Y-axis rescales when series are toggled to fit only visible data",
       "Checkbox label colors match the corresponding line colors"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Phase Transition Explorer",

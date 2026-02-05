@@ -348,3 +348,34 @@ Next: Task 17 - Hover tooltip on scatter dots (already partially done via charti
 Rule Space Map category COMPLETE (Tasks 13-18).
 
 Next: Phase Transition Explorer (Tasks 19-24) or Block Entropy (Tasks 25-31)
+
+## 2026-02-05 - Phase Transition Explorer: Metric Checkboxes (Task 22) - COMPLETE
+
+Implemented metric visibility toggle checkboxes for the Phase Explorer line chart:
+
+1. Checkbox UI:
+   - 6 checkboxes (one per metric) in #phase-metric-checkboxes container
+   - All checked by default, positioned between controls and chart
+   - Label colors match corresponding line colors
+   - Styled with flex layout, centered, monospace font
+
+2. Visibility toggling:
+   - getVisibleMetrics() filters PHASE_METRICS by checkbox state
+   - renderPhaseChart() now only renders visible metrics
+   - lastSweepResults/lastSweepRule stored for re-render without recomputing sweep
+   - Checkbox change events trigger chart re-render
+
+3. Y-axis rescaling:
+   - Chart auto-rescales since createLineChart only receives visible series data
+   - Legend updates to show only visible series
+
+4. Chart infrastructure improvements:
+   - Added data-series attribute to line chart paths (alongside data-series-name)
+   - Added data-axis="y" attribute to Y-axis tick labels for programmatic access
+
+5. Tests: 10/10 passing (tests/phase-explorer-checkboxes.js)
+   - Container, checkboxes, defaults, labels, colors
+   - Toggle on/off, multiple toggles, Y-axis rescaling
+   - No regression: existing 13/13 Phase Explorer tests still pass
+
+Next: Task 23 - Critical density points (steepest derivatives)
