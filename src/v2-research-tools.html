@@ -1229,6 +1229,71 @@
             return svg;
         }
 
+        // Charting Engine - Canvas Heatmap
+        function createHeatmap(canvas, matrix, config = {}) {
+            const colorMin = config.colorMin || [0, 0, 0];       // Black
+            const colorMid = config.colorMid || [0, 255, 255];   // Cyan
+            const colorMax = config.colorMax || [255, 255, 255];  // White
+
+            const rows = matrix.length;
+            const cols = matrix[0].length;
+
+            // Set canvas dimensions to match matrix
+            canvas.width = cols;
+            canvas.height = rows;
+            canvas.style.imageRendering = 'pixelated';
+
+            const ctx = canvas.getContext('2d');
+            const imageData = ctx.createImageData(cols, rows);
+
+            // Find min/max values
+            let min = Infinity;
+            let max = -Infinity;
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const val = matrix[r][c];
+                    if (val < min) min = val;
+                    if (val > max) max = val;
+                }
+            }
+
+            // Handle uniform values
+            const range = max - min || 1;
+
+            // Map values to colors via three-point gradient
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const val = matrix[r][c];
+                    const normalized = (val - min) / range;
+                    const idx = (r * cols + c) * 4;
+
+                    let color;
+                    if (normalized < 0.5) {
+                        const t = normalized * 2;
+                        color = [
+                            Math.round(colorMin[0] + (colorMid[0] - colorMin[0]) * t),
+                            Math.round(colorMin[1] + (colorMid[1] - colorMin[1]) * t),
+                            Math.round(colorMin[2] + (colorMid[2] - colorMin[2]) * t)
+                        ];
+                    } else {
+                        const t = (normalized - 0.5) * 2;
+                        color = [
+                            Math.round(colorMid[0] + (colorMax[0] - colorMid[0]) * t),
+                            Math.round(colorMid[1] + (colorMax[1] - colorMid[1]) * t),
+                            Math.round(colorMid[2] + (colorMax[2] - colorMid[2]) * t)
+                        ];
+                    }
+
+                    imageData.data[idx] = color[0];
+                    imageData.data[idx + 1] = color[1];
+                    imageData.data[idx + 2] = color[2];
+                    imageData.data[idx + 3] = 255;
+                }
+            }
+
+            ctx.putImageData(imageData, 0, 0);
+        }
+
         // Rendering
         function renderToCanvas(grid, canvas) {
             const rows = grid.length;

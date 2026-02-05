@@ -118,7 +118,7 @@
       "A matrix of all ones renders as uniform maximum color",
       "Mixed values show a visible gradient between min and max colors"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Custom Charting Engine",

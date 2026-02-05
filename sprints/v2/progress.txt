@@ -194,3 +194,27 @@ Implemented legend functionality for line charts with comprehensive features:
    - Provides sufficient space for ~12-15 character labels
 
 Next: Task 10 - Canvas heatmap renderer for Phase Explorer and Light Cones features
+
+## 2026-02-05 - Custom Charting Engine: Canvas Heatmap (Task 10) - COMPLETE
+
+Implemented Canvas heatmap renderer for visualizing 2D numeric matrices:
+
+1. createHeatmap() function:
+   - Accepts canvas element, 2D matrix, optional color config
+   - Three-point color gradient: black → cyan → white (default)
+   - Linear value mapping from matrix min to max
+   - Canvas dimensions auto-match matrix dimensions
+   - Pixelated image rendering for pixel-art aesthetic
+
+2. Color mapping:
+   - Values 0-0.5: interpolate min→mid (black→cyan)
+   - Values 0.5-1: interpolate mid→max (cyan→white)
+   - Custom colors via colorMin/colorMid/colorMax config
+   - Full alpha (255) on all pixels
+
+3. Tests: 10/10 passing (tests/heatmap-renderer-playwright.js)
+   - Dimensions, uniform colors, gradient, custom config
+   - Pixelated rendering, full opacity, 128x128 performance
+   - Visual test: light cone pattern rendered and screenshot verified
+
+Next: Task 11 - Color scale bar legend for heatmap
