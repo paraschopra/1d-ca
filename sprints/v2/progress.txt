@@ -379,3 +379,32 @@ Implemented metric visibility toggle checkboxes for the Phase Explorer line char
    - No regression: existing 13/13 Phase Explorer tests still pass
 
 Next: Task 23 - Critical density points (steepest derivatives)
+
+## 2026-02-05 - Phase Transition Explorer: Critical Density Points (Task 23) - COMPLETE
+
+Implemented critical density detection with visual markers:
+
+1. findCriticalDensity() function:
+   - Computes finite differences of each metric across density levels
+   - Finds density with steepest absolute derivative (skipping boundary levels)
+   - Smart thresholding: requires metric range > 0.05 AND step change > 5% of total range
+   - Returns null for flat metrics (Class I rules like Rule 0) — no false positives
+
+2. Visual rendering:
+   - Vertical dashed lines (stroke-dasharray: 6,4) at critical densities
+   - Lines colored to match their metric (same colors as series lines)
+   - Density percentage labels above each line with label staggering to avoid overlap
+   - Lines span full plot height within margins
+   - X-position uses same scaling as chart (density 0-1 with 10% padding)
+
+3. Integration with checkboxes:
+   - Critical lines only drawn for visible (checked) metrics
+   - Lines update when checkboxes are toggled
+   - Lines update when rule changes
+
+4. Tests: 10/10 passing (tests/phase-critical-points.js)
+   - Group exists, dashed, vertical, correct colors, labels
+   - Toggle updates, Rule 0 no lines, Rule 110 has lines
+   - No regression: 13/13 Tasks 19-21 + 10/10 Task 22 still pass
+
+Next: Task 24 - Async progress bar (already partially implemented)

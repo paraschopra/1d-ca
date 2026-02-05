@@ -280,7 +280,7 @@
       "Critical lines update when metric visibility is toggled",
       "Rules with no sharp transitions (e.g., Class I) show no critical lines"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Phase Transition Explorer",

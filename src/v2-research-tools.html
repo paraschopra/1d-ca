@@ -1980,6 +1980,49 @@
             return PHASE_METRICS.filter((m, i) => checkboxes[i] && checkboxes[i].checked);
         }
 
+        function findCriticalDensity(results, metricKey) {
+            // First compute the metric's overall range across the sweep
+            let metricMin = Infinity, metricMax = -Infinity;
+            for (let i = 0; i < results.length; i++) {
+                const v = results[i][metricKey];
+                if (isFinite(v)) {
+                    if (v < metricMin) metricMin = v;
+                    if (v > metricMax) metricMax = v;
+                }
+            }
+            const metricRange = metricMax - metricMin;
+
+            // Skip metrics with negligible variation (e.g., Class I rules where everything dies)
+            if (metricRange < 0.05) return null;
+
+            // Compute finite differences and find the density with steepest change
+            // Skip the very first and last intervals to avoid boundary artifacts
+            let maxAbsDeriv = 0;
+            let criticalIndex = -1;
+
+            for (let i = 2; i < results.length - 1; i++) {
+                const dy = results[i][metricKey] - results[i - 1][metricKey];
+                const dx = results[i].density - results[i - 1].density;
+                const deriv = Math.abs(dy / dx);
+                if (isFinite(deriv) && deriv > maxAbsDeriv) {
+                    maxAbsDeriv = deriv;
+                    criticalIndex = i;
+                }
+            }
+
+            // Threshold: the critical step should account for a significant fraction
+            // of the total metric range (at least 5% of total range per step)
+            const stepChange = criticalIndex >= 0
+                ? Math.abs(results[criticalIndex][metricKey] - results[criticalIndex - 1][metricKey])
+                : 0;
+            if (stepChange < metricRange * 0.05 || criticalIndex < 0) return null;
+
+            return {
+                density: results[criticalIndex].density,
+                maxDeriv: maxAbsDeriv
+            };
+        }
+
         function renderPhaseChart(results, ruleNumber) {
             if (!results) return;
             const chartContainer = document.getElementById('phase-chart-container');
@@ -1991,13 +2034,67 @@
                 points: results.map(r => ({ x: r.density, y: r[m.key] }))
             }));
 
-            createLineChart(chartContainer, series, {
+            const chartConfig = {
                 width: 800,
                 height: 450,
                 margins: { top: 20, right: 160, bottom: 50, left: 60 },
                 xLabel: 'Initial Density',
                 yLabel: 'Metric Value'
-            });
+            };
+
+            const svg = createLineChart(chartContainer, series, chartConfig);
+
+            // Add critical density lines
+            if (svg) {
+                const margins = chartConfig.margins;
+                const plotWidth = chartConfig.width - margins.left - margins.right;
+                const plotHeight = chartConfig.height - margins.top - margins.bottom;
+
+                const criticalGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                criticalGroup.setAttribute('class', 'critical-lines');
+
+                // Match the chart's X-axis scaling (density 0 to 1 with 10% padding)
+                const xMin = 0, xMax = 1;
+                const xRange = xMax - xMin || 1;
+                const xPadding = xRange * 0.1;
+                const xScale = (d) => margins.left + ((d - (xMin - xPadding)) / (xRange + 2 * xPadding)) * plotWidth;
+
+                let labelOffset = 0; // Stagger labels to avoid overlap
+
+                visibleMetrics.forEach(m => {
+                    const critical = findCriticalDensity(results, m.key);
+                    if (!critical) return;
+
+                    const x = xScale(critical.density);
+
+                    // Vertical dashed line
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', x);
+                    line.setAttribute('y1', margins.top);
+                    line.setAttribute('x2', x);
+                    line.setAttribute('y2', margins.top + plotHeight);
+                    line.setAttribute('stroke', m.color);
+                    line.setAttribute('stroke-width', '1.5');
+                    line.setAttribute('stroke-dasharray', '6,4');
+                    line.setAttribute('opacity', '0.7');
+                    criticalGroup.appendChild(line);
+
+                    // Density label
+                    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    label.setAttribute('x', x);
+                    label.setAttribute('y', margins.top - 5 - (labelOffset * 14));
+                    label.setAttribute('text-anchor', 'middle');
+                    label.setAttribute('fill', m.color);
+                    label.setAttribute('font-size', '10');
+                    label.setAttribute('font-family', 'monospace');
+                    label.textContent = `${Math.round(critical.density * 100)}%`;
+                    criticalGroup.appendChild(label);
+
+                    labelOffset = (labelOffset + 1) % 3; // Cycle through 3 vertical positions
+                });
+
+                svg.appendChild(criticalGroup);
+            }
         }
 
         // Phase Explorer controls
