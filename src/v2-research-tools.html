@@ -1597,9 +1597,10 @@
         }
 
         // Modal
-        function openModal(ruleNumber) {
+        function openModal(ruleNumber, forceCenterCell = false) {
             const lookupTable = ruleToLookupTable(ruleNumber);
-            const initialConfig = currentMode === 'center' ?
+            const useCenter = forceCenterCell || currentMode === 'center';
+            const initialConfig = useCenter ?
                 generateCenterCell(512) :
                 generateRandom(512, currentDensity);
             const grid = generateGrid(ruleNumber, 512, 512, initialConfig);
@@ -1632,9 +1633,9 @@
                 truthTableEl.appendChild(entry);
             }
 
-            const metricsGrid = generateGrid(ruleNumber, GRID_SIZE, GENERATIONS,
-                currentMode === 'center' ? generateCenterCell(GRID_SIZE) : generateRandom(GRID_SIZE, currentDensity));
-            const metrics = computeAllMetrics(ruleNumber, metricsGrid, metricsGrid[0]);
+            const metricsInitConfig = useCenter ? generateCenterCell(GRID_SIZE) : generateRandom(GRID_SIZE, currentDensity);
+            const metricsGrid = generateGrid(ruleNumber, GRID_SIZE, GENERATIONS, metricsInitConfig);
+            const metrics = computeAllMetrics(ruleNumber, metricsGrid, metricsInitConfig);
 
             const metricsTableEl = document.getElementById('metricsTable');
             metricsTableEl.innerHTML = `
@@ -1844,7 +1845,7 @@
             const data = precomputedMetrics.map(m => ({
                 x: m[xMetric],
                 y: m[yMetric],
-                label: `Rule ${m.rule}`,
+                label: `Rule ${m.rule} (Class ${m.wolframClass})`,
                 color: CLASS_COLORS[m.wolframClass] || '#888',
                 rule: m.rule,
                 wolframClass: m.wolframClass
@@ -1875,13 +1876,13 @@
                 `<span style="color: ${color};">&#9679; Class ${cls}</span>`
             ).join('');
 
-            // Wire click events on scatter dots to open modal
+            // Wire click events on scatter dots to open modal (always center-cell)
             const svg = chartContainer.querySelector('svg');
             if (svg) {
                 svg.querySelectorAll('circle[data-label]').forEach((circle, i) => {
                     circle.addEventListener('click', () => {
                         const ruleNum = data[i].rule;
-                        openModal(ruleNum);
+                        openModal(ruleNum, true); // forceCenterCell for Rule Map
                     });
                 });
             }

@@ -328,3 +328,23 @@ Implemented full Rule Space Map visualization:
    - Color coding, legend, dropdown re-render
 
 Next: Task 17 - Hover tooltip on scatter dots (already partially done via charting engine tooltip)
+
+## 2026-02-05 - Rule Space Map: Tooltip + Click Modal (Tasks 17-18) - COMPLETE
+
+1. Task 17 - Hover tooltip:
+   - Tooltip shows "Rule N (Class X)" + both metric values with labels
+   - Wolfram class included in label (e.g., "Rule 232 (Class I)")
+   - Tooltip appears near cursor, clamped to SVG bounds
+   - Hides on mouse leave
+   - Tests: 11/11 (rule-map-tooltip-playwright.js)
+
+2. Task 18 - Click to open modal:
+   - Clicking a dot opens modal with 512x512 rendering
+   - Modal shows truth table (8 entries) and metrics table
+   - Always uses center-cell initial config (forceCenterCell flag)
+   - Modal closes correctly, returns to Rule Map tab
+   - Tests: 7/7 (rule-map-click-playwright.js)
+
+Rule Space Map category COMPLETE (Tasks 13-18).
+
+Next: Phase Transition Explorer (Tasks 19-24) or Block Entropy (Tasks 25-31)

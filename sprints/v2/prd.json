@@ -204,7 +204,7 @@
       "Tooltip appears near the hovered dot without going off-screen",
       "Moving away from the dot hides the tooltip"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Rule Space Map",
@@ -216,7 +216,7 @@
       "Clicking different dots opens the correct rule each time",
       "The modal uses center-cell initial config regardless of Grid View mode setting"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Phase Transition Explorer",
