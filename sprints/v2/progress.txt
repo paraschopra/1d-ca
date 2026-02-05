@@ -408,3 +408,20 @@ Implemented critical density detection with visual markers:
    - No regression: 13/13 Tasks 19-21 + 10/10 Task 22 still pass
 
 Next: Task 24 - Async progress bar (already partially implemented)
+
+## 2026-02-05 - Phase Transition Explorer: Async Progress Bar (Task 24) - COMPLETE
+
+This was already fully implemented as part of Tasks 19-21. Verified with 8 new tests:
+
+1. Progress bar container and element exist
+2. Visible during sweep, hidden after completion
+3. Fills 0% → intermediate → 100% (18 rAF updates observed)
+4. UI responsive during computation (tab switching works)
+5. Rapid rule changes handled via cancel token
+6. Uses requestAnimationFrame for chunked computation (3 levels/frame)
+
+Tests: 8/8 passing (tests/phase-progress-bar.js)
+
+Phase Transition Explorer category COMPLETE (Tasks 19-24).
+
+Next: Block Entropy & Excess Entropy (Tasks 25-31)

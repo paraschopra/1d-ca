@@ -293,7 +293,7 @@
       "Starting a new sweep (changing rule) cancels any in-progress sweep",
       "The progress bar disappears when computation is complete"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Block Entropy & Excess Entropy",
