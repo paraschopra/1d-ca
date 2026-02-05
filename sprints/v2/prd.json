@@ -383,7 +383,7 @@
       "The chart is labeled 'Block Entropy' and fits within the modal layout",
       "The chart uses the same dark theme styling as the rest of the app"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Perturbation Light Cones",

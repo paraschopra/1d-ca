@@ -471,3 +471,23 @@ Added entropy rate and excess entropy to card and modal displays:
 Tests: 7/7 passing (tests/block-entropy-display.js)
 
 Next: Task 31 - H(L) vs L line plot in modal
+
+## 2026-02-05 - Block Entropy Chart in Modal (Task 31) - COMPLETE
+
+Added H(L) vs L line chart to modal detail view:
+
+1. renderBlockEntropyChart() function:
+   - 400x250 SVG chart in modal's Block Entropy section
+   - 8 green data points (circles) connected by green line
+   - Orange dashed linear fit line (slope=h, intercept=E)
+   - X-axis: Block Length L (1-8), Y-axis: H(L)
+   - Annotations: "h = 0.XXX" and "E = X.XXX"
+   - Dark theme (#1a1a1a background, #00ff88 accent)
+
+2. Called from openModal() with metrics.blockEntropy, entropyRate, excessEntropy
+
+Tests: 8/8 passing (tests/block-entropy-chart.js)
+
+Block Entropy & Excess Entropy category COMPLETE (Tasks 25-31).
+
+Next: Perturbation Light Cones (Tasks 32-37)

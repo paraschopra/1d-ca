@@ -566,6 +566,10 @@
                 <h3>Metrics</h3>
                 <table class="metrics-table" id="metricsTable"></table>
             </div>
+            <div class="modal-section">
+                <h3>Block Entropy</h3>
+                <div id="blockEntropyChart" style="text-align: center;"></div>
+            </div>
         </div>
     </div>
 
@@ -1684,6 +1688,172 @@
             `;
         }
 
+        // Block Entropy Chart for Modal
+        function renderBlockEntropyChart(blockEntropy, h, E) {
+            const container = document.getElementById('blockEntropyChart');
+            container.innerHTML = '';
+
+            const width = 400, height = 250;
+            const margins = { top: 30, right: 80, bottom: 40, left: 50 };
+            const plotWidth = width - margins.left - margins.right;
+            const plotHeight = height - margins.top - margins.bottom;
+
+            // Data points: L=1..8, H(L)
+            const points = blockEntropy.map((hl, i) => ({ x: i + 1, y: hl }));
+            const yMax = Math.max(...blockEntropy) * 1.1 || 1;
+
+            const xScale = (x) => margins.left + ((x - 0.5) / 8.5) * plotWidth;
+            const yScale = (y) => margins.top + plotHeight - (y / yMax) * plotHeight;
+
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('width', width);
+            svg.setAttribute('height', height);
+            svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+            svg.style.background = '#1a1a1a';
+
+            // Gridlines
+            for (let i = 0; i <= 4; i++) {
+                const y = margins.top + (i / 4) * plotHeight;
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', margins.left);
+                line.setAttribute('y1', y);
+                line.setAttribute('x2', margins.left + plotWidth);
+                line.setAttribute('y2', y);
+                line.setAttribute('stroke', '#333');
+                line.setAttribute('stroke-width', '0.5');
+                svg.appendChild(line);
+            }
+
+            // Axes
+            const xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            xAxis.setAttribute('x1', margins.left);
+            xAxis.setAttribute('y1', margins.top + plotHeight);
+            xAxis.setAttribute('x2', margins.left + plotWidth);
+            xAxis.setAttribute('y2', margins.top + plotHeight);
+            xAxis.setAttribute('stroke', '#666');
+            xAxis.setAttribute('stroke-width', '1');
+            svg.appendChild(xAxis);
+
+            const yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            yAxis.setAttribute('x1', margins.left);
+            yAxis.setAttribute('y1', margins.top);
+            yAxis.setAttribute('x2', margins.left);
+            yAxis.setAttribute('y2', margins.top + plotHeight);
+            yAxis.setAttribute('stroke', '#666');
+            yAxis.setAttribute('stroke-width', '1');
+            svg.appendChild(yAxis);
+
+            // X-axis ticks (L=1..8)
+            for (let L = 1; L <= 8; L++) {
+                const x = xScale(L);
+                const tick = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                tick.setAttribute('x', x);
+                tick.setAttribute('y', margins.top + plotHeight + 15);
+                tick.setAttribute('text-anchor', 'middle');
+                tick.setAttribute('fill', '#aaa');
+                tick.setAttribute('font-size', '10');
+                tick.textContent = L;
+                svg.appendChild(tick);
+            }
+
+            // Y-axis ticks
+            for (let i = 0; i <= 4; i++) {
+                const val = (yMax * (4 - i) / 4);
+                const y = margins.top + (i / 4) * plotHeight;
+                const tick = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                tick.setAttribute('x', margins.left - 5);
+                tick.setAttribute('y', y + 3);
+                tick.setAttribute('text-anchor', 'end');
+                tick.setAttribute('fill', '#aaa');
+                tick.setAttribute('font-size', '9');
+                tick.textContent = val.toFixed(1);
+                svg.appendChild(tick);
+            }
+
+            // Axis labels
+            const xLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            xLabel.setAttribute('x', margins.left + plotWidth / 2);
+            xLabel.setAttribute('y', height - 5);
+            xLabel.setAttribute('text-anchor', 'middle');
+            xLabel.setAttribute('fill', '#00ff88');
+            xLabel.setAttribute('font-size', '11');
+            xLabel.textContent = 'Block Length L';
+            svg.appendChild(xLabel);
+
+            const yLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            yLabel.setAttribute('x', 8);
+            yLabel.setAttribute('y', margins.top + plotHeight / 2);
+            yLabel.setAttribute('text-anchor', 'middle');
+            yLabel.setAttribute('fill', '#00ff88');
+            yLabel.setAttribute('font-size', '11');
+            yLabel.setAttribute('transform', `rotate(-90, 8, ${margins.top + plotHeight / 2})`);
+            yLabel.textContent = 'H(L)';
+            svg.appendChild(yLabel);
+
+            // Dashed linear fit line: y = h*L + E
+            const fitLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            fitLine.setAttribute('x1', xScale(1));
+            fitLine.setAttribute('y1', yScale(h * 1 + E));
+            fitLine.setAttribute('x2', xScale(8));
+            fitLine.setAttribute('y2', yScale(h * 8 + E));
+            fitLine.setAttribute('stroke', '#ff9966');
+            fitLine.setAttribute('stroke-width', '1.5');
+            fitLine.setAttribute('stroke-dasharray', '6,4');
+            fitLine.setAttribute('class', 'fit-line');
+            svg.appendChild(fitLine);
+
+            // Data line (H(L) curve)
+            let pathData = '';
+            points.forEach((p, i) => {
+                const x = xScale(p.x);
+                const y = yScale(p.y);
+                pathData += (i === 0 ? 'M' : 'L') + ` ${x} ${y}`;
+            });
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', pathData);
+            path.setAttribute('fill', 'none');
+            path.setAttribute('stroke', '#00ff88');
+            path.setAttribute('stroke-width', '2');
+            path.setAttribute('class', 'data-line');
+            svg.appendChild(path);
+
+            // Data points
+            points.forEach(p => {
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', xScale(p.x));
+                circle.setAttribute('cy', yScale(p.y));
+                circle.setAttribute('r', 3);
+                circle.setAttribute('fill', '#00ff88');
+                svg.appendChild(circle);
+            });
+
+            // Annotations: h and E values
+            const annotGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            annotGroup.setAttribute('class', 'annotations');
+
+            const hText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            hText.setAttribute('x', margins.left + plotWidth + 5);
+            hText.setAttribute('y', margins.top + 15);
+            hText.setAttribute('fill', '#ff9966');
+            hText.setAttribute('font-size', '11');
+            hText.setAttribute('font-family', 'monospace');
+            hText.textContent = `h = ${h.toFixed(3)}`;
+            annotGroup.appendChild(hText);
+
+            const eText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            eText.setAttribute('x', margins.left + plotWidth + 5);
+            eText.setAttribute('y', margins.top + 30);
+            eText.setAttribute('fill', '#ff9966');
+            eText.setAttribute('font-size', '11');
+            eText.setAttribute('font-family', 'monospace');
+            eText.textContent = `E = ${E.toFixed(3)}`;
+            annotGroup.appendChild(eText);
+
+            svg.appendChild(annotGroup);
+
+            container.appendChild(svg);
+        }
+
         // Modal
         function openModal(ruleNumber, forceCenterCell = false) {
             const lookupTable = ruleToLookupTable(ruleNumber);
@@ -1738,6 +1908,9 @@
                 <tr><td>Entropy Rate</td><td>${metrics.entropyRate.toFixed(4)}</td></tr>
                 <tr><td>Excess Entropy</td><td>${metrics.excessEntropy.toFixed(4)}</td></tr>
             `;
+
+            // Render H(L) vs L chart
+            renderBlockEntropyChart(metrics.blockEntropy, metrics.entropyRate, metrics.excessEntropy);
 
             document.getElementById('modalOverlay').classList.add('active');
         }
