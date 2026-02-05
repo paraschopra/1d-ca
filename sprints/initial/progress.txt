@@ -80,3 +80,10 @@ Task 3: Full Grid Generation - ✓ COMPLETE (2026-02-05)
 - Defaults to single center cell; accepts custom initial config
 - All 10 new tests passing (21 total tests, 100%)
 - Verified: 128x128 grid dimensions, Rule 0/30/255 behavior, custom configs
+
+Task 4: Initial Configuration Generators - ✓ COMPLETE (2026-02-05)
+-------------------------------------------------------------------
+- Implemented generateCenterCell(width) - single cell at center position
+- Implemented generateRandom(width, density) - probabilistic initialization
+- All 9 new tests passing (30 total tests, 100%)
+- Verified: even/odd width handling, density 0.0/0.5/1.0, non-determinism

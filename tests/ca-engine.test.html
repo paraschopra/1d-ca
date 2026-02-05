@@ -147,6 +147,31 @@
             return grid;
         }
 
+        /**
+         * Generate a single-center-cell initial configuration
+         * @param {number} width - Width of the configuration
+         * @returns {Array<number>} Array with single 1 at center, rest 0s
+         */
+        function generateCenterCell(width) {
+            const config = new Array(width).fill(0);
+            config[Math.floor(width / 2)] = 1;
+            return config;
+        }
+
+        /**
+         * Generate a random initial configuration
+         * @param {number} width - Width of the configuration
+         * @param {number} density - Probability (0.0-1.0) that each cell is 1
+         * @returns {Array<number>} Random array of 0s and 1s
+         */
+        function generateRandom(width, density) {
+            const config = new Array(width);
+            for (let i = 0; i < width; i++) {
+                config[i] = Math.random() < density ? 1 : 0;
+            }
+            return config;
+        }
+
         // ============================================
         // TESTS FOR TASK 1: Rule-to-Lookup-Table
         // ============================================
@@ -273,10 +298,52 @@
             assertEquals(gridCustom[0], customInit, 'Grid uses custom initial configuration');
         }
 
+        // ============================================
+        // TESTS FOR TASK 4: Initial Configuration Generators
+        // ============================================
+
+        function testInitialConfigs() {
+            console.log('\n=== Testing Initial Configuration Generators ===\n');
+
+            // Test 1: Center cell for even width
+            const centerEven = generateCenterCell(128);
+            assertEquals(centerEven.length, 128, 'Center cell config has correct length (128)');
+            assert(centerEven[64] === 1, 'Center cell at position 64 (even width)');
+            assert(centerEven.filter(x => x === 1).length === 1, 'Only one cell is 1');
+
+            // Test 2: Center cell for odd width
+            const centerOdd = generateCenterCell(129);
+            assert(centerOdd[64] === 1, 'Center cell at position 64 (odd width)');
+            assert(centerOdd.filter(x => x === 1).length === 1, 'Only one cell is 1 (odd)');
+
+            // Test 3: Random with density 0.5
+            const random50 = generateRandom(1000, 0.5);
+            const count50 = random50.filter(x => x === 1).length;
+            const density50 = count50 / 1000;
+            // Should be roughly 50%, within 5% tolerance
+            assert(density50 > 0.45 && density50 < 0.55,
+                `Random density ~0.5 (actual: ${density50.toFixed(3)})`);
+
+            // Test 4: Random with density 0.0
+            const random0 = generateRandom(100, 0.0);
+            assert(random0.every(x => x === 0), 'Random with density 0.0 is all zeros');
+
+            // Test 5: Random with density 1.0
+            const random100 = generateRandom(100, 1.0);
+            assert(random100.every(x => x === 1), 'Random with density 1.0 is all ones');
+
+            // Test 6: Non-deterministic random generation
+            const randA = generateRandom(50, 0.5);
+            const randB = generateRandom(50, 0.5);
+            const different = randA.some((val, i) => val !== randB[i]);
+            assert(different, 'Two random configs are different (non-deterministic)');
+        }
+
         // Run all tests
         testRuleToLookupTable();
         testEvolveRow();
         testGenerateGrid();
+        testInitialConfigs();
         showSummary();
     </script>
 </body>

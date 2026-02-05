@@ -46,7 +46,7 @@
       "Generate a random config with density=1.0 and verify all cells are 1",
       "Verify that two successive calls to the random generator produce different configurations (non-deterministic)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Canvas Rendering",
