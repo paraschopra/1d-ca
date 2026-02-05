@@ -459,3 +459,15 @@ Implemented block entropy computation pipeline:
 Tests: 15/15 passing (tests/block-entropy.js)
 
 Next: Task 30 - Display entropy rate & excess entropy on cards and modal
+
+## 2026-02-05 - Block Entropy Display (Task 30) - COMPLETE
+
+Added entropy rate and excess entropy to card and modal displays:
+
+1. Card metrics: added "h: 0.XXX" and "E: X.XX" on same line after Period
+2. Modal metrics table: added "Entropy Rate" and "Excess Entropy" rows with 4 decimals
+3. No regression on existing metrics (Entropy, Density, Symmetry, Period, Class)
+
+Tests: 7/7 passing (tests/block-entropy-display.js)
+
+Next: Task 31 - H(L) vs L line plot in modal

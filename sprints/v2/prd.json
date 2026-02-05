@@ -370,7 +370,7 @@
       "Class III rules show high entropy rate (~1.0) and low excess entropy (~0.0)",
       "Class IV rules show moderate entropy rate and higher excess entropy than Class III"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Block Entropy & Excess Entropy",

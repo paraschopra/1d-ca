@@ -1678,7 +1678,9 @@
                 <span class="metric-label">Entropy:</span> <span class="metric-value">${m.entropy.toFixed(3)}</span><br>
                 <span class="metric-label">Density:</span> <span class="metric-value">${(m.density * 100).toFixed(1)}%</span><br>
                 <span class="metric-label">Symmetry:</span> <span class="metric-value">${m.symmetry.toFixed(2)}</span><br>
-                <span class="metric-label">Period:</span> <span class="metric-value">${m.period}</span>
+                <span class="metric-label">Period:</span> <span class="metric-value">${m.period}</span><br>
+                <span class="metric-label">h:</span> <span class="metric-value">${m.entropyRate.toFixed(3)}</span>
+                <span class="metric-label">E:</span> <span class="metric-value">${m.excessEntropy.toFixed(2)}</span>
             `;
         }
 
@@ -1733,6 +1735,8 @@
                 <tr><td>Lyapunov Exp.</td><td>${metrics.lyapunov.toFixed(4)}</td></tr>
                 <tr><td>Compressibility</td><td>${metrics.compressibility.toFixed(4)}</td></tr>
                 <tr><td>Period</td><td>${metrics.period}</td></tr>
+                <tr><td>Entropy Rate</td><td>${metrics.entropyRate.toFixed(4)}</td></tr>
+                <tr><td>Excess Entropy</td><td>${metrics.excessEntropy.toFixed(4)}</td></tr>
             `;
 
             document.getElementById('modalOverlay').classList.add('active');
