@@ -22,7 +22,7 @@ Task Count: 25 tasks across 8 categories
   - Polish & Testing: 3 tasks (layout, playwright tests, regression)
 
 Project Context:
-  - App is a single self-contained HTML/CSS/JS file at src/v2-research-tools.html (~2730 lines)
+  - App is a single self-contained HTML/CSS/JS file at src/index.html (~2730 lines)
   - Currently has 4 tabs: Grid View, Rule Map, Phase Explorer, Light Cones
   - 11 metrics computed for all 256 elementary CA rules
   - Dark theme: #0a0a0a bg, #1a1a1a panels, #00ff88 accent

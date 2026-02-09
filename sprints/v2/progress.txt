@@ -72,7 +72,7 @@ Implemented complete tab navigation infrastructure:
 
 1. Created new entry point at src/index.html linking to v1 and v2 explorations
 2. Renamed src/index.html → src/v1-initial-exploration.html
-3. Created src/v2-research-tools.html with:
+3. Created src/index.html with:
    - Tab bar with 4 tabs (Grid View, Rule Map, Phase Explorer, Light Cones)
    - Tab switching JS with URL hash routing
    - Grid View panel wrapping all v1 CA functionality
@@ -116,7 +116,7 @@ Implemented SVG scatter plot renderer with full axes and labels:
    - Visual rendering tested and screenshot verified
 
 4. Integration:
-   - Added to src/v2-research-tools.html as reusable function
+   - Added to src/index.html as reusable function
    - Demo chart added to Rule Map panel for visual verification
    - Dark theme styling matches app design
 
@@ -126,7 +126,7 @@ Next: Line charts (Task 8) and heatmaps (Task 10) for Phase Explorer and Light C
 
 Implemented SVG line chart renderer with full multi-series support:
 
-1. Created createLineChart() function in src/v2-research-tools.html (lines 930-1164):
+1. Created createLineChart() function in src/index.html (lines 930-1164):
    - Accepts container element, series array, and config object
    - Configurable width, height, margins, axis labels
 

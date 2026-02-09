@@ -52,7 +52,7 @@
     <script>
         // Import the real implementation by parsing the actual source file
         // This is a bit hacky but ensures we're testing the real code
-        fetch('../src/v2-research-tools.html')
+        fetch('../src/index.html')
             .then(response => response.text())
             .then(html => {
                 // Extract the createLineChart function

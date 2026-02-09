@@ -3,7 +3,7 @@
 **Date**: 2026-02-09
 **Sprint scope**: Add hover tooltips explaining all 10 CA metrics across 4 UI surfaces
 **Commits**: `f3eb814` (PRD), `d4a7955` (implementation)
-**Files modified**: `src/v2-research-tools.html` (+124 lines), `tests/metric-tooltips.js` (new, 361 lines)
+**Files modified**: `src/index.html` (+124 lines), `tests/metric-tooltips.js` (new, 361 lines)
 
 ## Features Completed (5/5)
 
@@ -29,7 +29,7 @@ This sprint added a tooltip system that explains every metric in the 1D CA explo
 
 **What it does**: Provides a single source of truth for metric explanations. Any UI surface that needs to explain a metric looks up the text from this object rather than hardcoding strings.
 
-**File**: `src/v2-research-tools.html` (lines 682–693)
+**File**: `src/index.html` (lines 682–693)
 
 **Key data structure**:
 
@@ -58,7 +58,7 @@ const metricTooltips = {
 
 **What it does**: A reusable, zero-JS tooltip that any element can opt into by adding `class="has-tooltip"` and `data-tooltip="..."`.
 
-**File**: `src/v2-research-tools.html` (lines 442–494, CSS section)
+**File**: `src/index.html` (lines 442–494, CSS section)
 
 **CSS rules**:
 
@@ -98,7 +98,7 @@ const metricTooltips = {
 
 **What it does**: Every rule card (256 total) now has 7 tooltip-enabled metric labels.
 
-**File**: `src/v2-research-tools.html`, `formatMetricsHTML()` function (lines 1792–1804)
+**File**: `src/index.html`, `formatMetricsHTML()` function (lines 1792–1804)
 
 **Before → After**:
 
@@ -134,7 +134,7 @@ The `formatMetricsHTML(m)` function is called once per card during the chunked g
 
 **What it does**: All 10 metric name cells in the modal detail view have tooltips.
 
-**File**: `src/v2-research-tools.html`, `openModal()` function (lines 2011–2022)
+**File**: `src/index.html`, `openModal()` function (lines 2011–2022)
 
 **Before → After**:
 
@@ -158,7 +158,7 @@ All 10 metrics in the table: Entropy, Density, Mean Field, Wolfram Class, Symmet
 
 **A. Phase Explorer checkboxes** (6 checkboxes)
 
-**File**: `src/v2-research-tools.html`, `buildPhaseCheckboxes()` IIFE (lines 2520–2522)
+**File**: `src/index.html`, `buildPhaseCheckboxes()` IIFE (lines 2520–2522)
 
 Two lines added to the existing checkbox builder loop:
 ```js
@@ -170,7 +170,7 @@ Each `PHASE_METRICS` entry has a `.key` property (e.g., `'entropy'`, `'lyapunov'
 
 **B. Rule Map axis info icons** (2 icons)
 
-**File**: `src/v2-research-tools.html`
+**File**: `src/index.html`
 - HTML: lines 552, 565 (new `<span>` elements)
 - JS: `updateAxisInfoTooltips()` function (lines 2275–2291)
 

@@ -9,7 +9,7 @@ const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
 
-const HTML_PATH = path.resolve(__dirname, '../src/v2-research-tools.html');
+const HTML_PATH = path.resolve(__dirname, '../src/index.html');
 const SCREENSHOT_DIR = path.resolve(__dirname, '../scratchpad');
 if (!fs.existsSync(SCREENSHOT_DIR)) fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
 

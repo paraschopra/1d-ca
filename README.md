@@ -9,7 +9,7 @@ A self-contained HTML application for exploring all 256 elementary cellular auto
 ├── src/
 │   ├── index.html                  # Landing page linking to v1 and v2
 │   ├── v1-initial-exploration.html # v1: 256 rule cards with metrics
-│   └── v2-research-tools.html      # v2: tabbed research tools (Rule Map, Phase Explorer, Light Cones)
+│   └── index.html      # v2: tabbed research tools (Rule Map, Phase Explorer, Light Cones)
 ├── tests/
 │   ├── ca-engine.test.html         # Core engine + metrics test suite (53 tests)
 │   ├── run-tests-jsdom.js          # JSDOM test runner
