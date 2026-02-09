@@ -17,5 +17,13 @@ Project Context:
   - App is a single self-contained HTML file (no external deps)
   - Dark theme: #0a0a0a bg, #1a1a1a panels, #00ff88 accent
 
-Next Steps:
-  - Implement tasks sequentially (definitions → CSS → integrations)
+Implementation Log:
+  2026-02-09: All 5 tasks implemented in a single pass
+  - Task 1 (Tooltip Definitions): Added metricTooltips object with 10 keys, each 150-250 chars
+  - Task 2 (Tooltip CSS): Pure CSS with ::after/::before pseudo-elements, 250ms delay, green border, caret arrow
+  - Task 3 (Rule Cards): 7 tooltip-enabled elements per card (Class badge + 6 metric labels)
+  - Task 4 (Modal Table): All 10 metric name cells have tooltips, z-index 10000
+  - Task 5 (Phase + Rule Map): 6 phase checkbox labels + 2 info icons (ⓘ) next to axis dropdowns
+  - 21/21 Playwright tests pass, no regressions in existing tests
+
+All tasks complete.

@@ -16,7 +16,7 @@
       "Entropy Rate (h) tooltip explains bits of new information per cell per time step",
       "Excess Entropy (E) tooltip explains total stored information / structural complexity beyond randomness"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Tooltip CSS Component",
@@ -33,7 +33,7 @@
       "Tooltip text wraps nicely at around 250-300px max width",
       "Tooltip works on both the metric-label spans and table td elements"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Integration — Rule Cards",
@@ -48,7 +48,7 @@
       "Tooltips do not interfere with clicking the card to open the modal",
       "Tooltips work correctly on all 256 cards without performance issues"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Integration — Modal Metrics Table",
@@ -62,7 +62,7 @@
       "Tooltips are readable over the modal background and do not get clipped by the modal edges",
       "The tooltip z-index is high enough to appear above the modal overlay"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Integration — Phase Explorer & Rule Map",
@@ -75,6 +75,6 @@
       "When hovering over the dropdown option labels, the selected metric's tooltip is visible (via a small info icon or help text near each dropdown that shows the current metric's description)",
       "Tooltips do not interfere with checkbox toggling or dropdown selection"
     ],
-    "passes": false
+    "passes": true
   }
 ]
