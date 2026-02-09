@@ -65,8 +65,8 @@ Changes made during interactive review session:
    - Randomize button re-renders at current density with new random seed
 
 6. Project Rename & Cleanup
-   - Renamed src/v2-research-tools.html → src/index.html (default entry point)
-   - Deleted src/v1-initial-exploration.html and old src/index.html
+   - Renamed src/v2-research-tools.html → index.html (default entry point)
+   - Deleted src/v1-initial-exploration.html and old index.html
    - Title changed from "1D CA Research Tools" to "1D Cellular Automata Playground"
    - Added footer: "Project by @paraschopra" with link to x.com/paraschopra
    - Updated all 31 test/doc files referencing old filename

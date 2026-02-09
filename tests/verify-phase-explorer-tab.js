@@ -6,7 +6,7 @@ const path = require('path');
   const page = await browser.newPage();
   page.setViewportSize({ width: 1400, height: 1000 });
 
-  const appFile = path.join(__dirname, '../src/index.html');
+  const appFile = path.join(__dirname, '../index.html');
   await page.goto(`file://${appFile}`);
 
   // Wait for page to load

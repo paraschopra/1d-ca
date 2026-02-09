@@ -7,7 +7,7 @@
 const { chromium } = require('playwright');
 const path = require('path');
 
-const HTML_PATH = path.resolve(__dirname, '../src/index.html');
+const HTML_PATH = path.resolve(__dirname, '../index.html');
 
 async function runTests() {
     const browser = await chromium.launch({ headless: true });

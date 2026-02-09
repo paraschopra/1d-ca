@@ -70,7 +70,7 @@
 
         // Load the HTML file
         async function loadPage() {
-            const response = await fetch('../src/index.html');
+            const response = await fetch('../index.html');
             const html = await response.text();
             const parser = new DOMParser();
             return parser.parseFromString(html, 'text/html');

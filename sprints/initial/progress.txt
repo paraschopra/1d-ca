@@ -90,7 +90,7 @@ Task 4: Initial Configuration Generators - ✓ COMPLETE (2026-02-05)
 
 Task 5: Canvas Rendering - ✓ COMPLETE (2026-02-05)
 ---------------------------------------------------
-- Created src/index.html with full HTML5 canvas rendering
+- Created index.html with full HTML5 canvas rendering
 - Implemented renderToCanvas(grid, canvas) for efficient pixel drawing
 - Renders all 256 rules with 128x128 resolution
 - Uses ImageData API for crisp, non-anti-aliased pixels

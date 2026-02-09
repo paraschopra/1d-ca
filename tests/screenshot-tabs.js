@@ -5,7 +5,7 @@ async function takeScreenshots() {
     const browser = await chromium.launch();
     const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
 
-    const filePath = 'file://' + path.resolve(__dirname, '../src/index.html');
+    const filePath = 'file://' + path.resolve(__dirname, '../index.html');
 
     console.log('Taking screenshots of tab navigation...\n');
 

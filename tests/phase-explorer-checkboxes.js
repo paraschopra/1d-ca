@@ -9,7 +9,7 @@ const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
 
-const HTML_PATH = path.resolve(__dirname, '../src/index.html');
+const HTML_PATH = path.resolve(__dirname, '../index.html');
 const SCREENSHOT_DIR = path.resolve(__dirname, '../scratchpad');
 
 // Ensure scratchpad exists
