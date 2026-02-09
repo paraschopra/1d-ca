@@ -1,0 +1,39 @@
+Sprint v4-walkthrough — Metrics Lab Interactive Walkthroughs
+=============================================================
+
+Started: 2026-02-09
+
+User Spec (verbatim):
+"the metrics still aren't very clear to me. e.g. if entropy is 0.2, what do i make of it? should we add a tab that walks through an example to illustrate different metrics, maybe visually and also with psuedocode?"
+
+User Choices:
+- Interactivity: Full step-by-step (stepper UI)
+- Placement: New 5th tab ("Metrics Lab")
+- Metric coverage: All 11 metrics equally
+
+Task Count: 25 tasks across 8 categories
+  - Tab Infrastructure: 2 tasks (tab + sidebar)
+  - Annotated Grid Renderer: 3 tasks (base renderer, highlights, annotations)
+  - Stepper Framework: 4 tasks (state mgr, UI, pseudocode, narrative)
+  - Simple Metric Walkthroughs: 4 tasks (entropy, density, mean field, symmetry)
+  - Advanced Metric Walkthroughs: 4 tasks (lyapunov, compressibility, period, wolfram class)
+  - Block Entropy Family: 3 tasks (block entropy, entropy rate, excess entropy)
+  - Comparison Panel: 2 tasks (component + wiring)
+  - Polish & Testing: 3 tasks (layout, playwright tests, regression)
+
+Project Context:
+  - App is a single self-contained HTML/CSS/JS file at src/v2-research-tools.html (~2730 lines)
+  - Currently has 4 tabs: Grid View, Rule Map, Phase Explorer, Light Cones
+  - 11 metrics computed for all 256 elementary CA rules
+  - Dark theme: #0a0a0a bg, #1a1a1a panels, #00ff88 accent
+  - Existing test suites: tab-navigation (15), metric-tooltips (21), block-entropy-display (7), phase-explorer (13), light-cones (23)
+
+Key Design Decisions:
+  - 32x32 grids for walkthroughs (smaller = individual cells visible & countable)
+  - Declarative walkthrough model (each metric is a config object with steps)
+  - Reuses existing compute functions (computeEntropy, etc.)
+  - Pure CSS/JS, no external dependencies
+  - Pseudocode (not real code) for educational clarity
+
+Implementation Log:
+  (to be updated as tasks are completed)

@@ -1,0 +1,380 @@
+[
+  {
+    "category": "Tab Infrastructure",
+    "description": "Add a 'Metrics Lab' tab button to the tab bar (after Light Cones) and a corresponding panel-lab div. Register 'lab' in the validTabs array so URL hash routing works. The panel should contain a two-column layout: a narrow left sidebar (metric selector) and a wide right main area (walkthrough content). Style to match existing dark theme.",
+    "steps": [
+      "A 5th tab button with data-tab='lab' and text 'Metrics Lab' appears in the tab bar after 'Light Cones'",
+      "Clicking the 'Metrics Lab' tab switches to panel-lab and highlights the tab with the green active style",
+      "Navigating to #lab in the URL loads the Metrics Lab tab directly",
+      "The panel-lab div contains a two-column flexbox layout: left sidebar (~200px) and right main area (flex: 1)",
+      "The sidebar has a dark background (#1a1a1a) with a border-right matching existing panel styling",
+      "The main area has placeholder text 'Select a metric to begin' centered in muted color",
+      "All 4 existing tabs still work correctly (no regression in tab switching)",
+      "switchTab('lab') correctly hides all other panels and shows panel-lab"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Tab Infrastructure",
+    "description": "Build the metric selector sidebar inside panel-lab with radio buttons for all 11 metrics. Group them logically: Basic (Entropy, Density, Mean Field, Symmetry), Dynamics (Lyapunov, Compressibility, Period, Wolfram Class), Information Theory (Entropy Rate, Excess Entropy, Block Entropy). Each radio button styled as a clickable list item with the metric name.",
+    "steps": [
+      "The sidebar contains 11 radio buttons (input type='radio', name='lab-metric') with labels for all 11 metrics",
+      "Radio buttons are grouped under 3 section headings: 'Basic', 'Dynamics', 'Information Theory'",
+      "Section headings are styled in muted color (#777) with small uppercase text",
+      "Clicking a radio button highlights it with the green accent color (#00ff88)",
+      "The selected metric name appears as a heading in the main content area",
+      "Default state: no metric selected, main area shows 'Select a metric to begin'",
+      "Radio buttons have has-tooltip class with metric tooltips from the existing metricTooltips object",
+      "Visual style matches the dark theme: dark background, light text, green accent on selection"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Annotated Grid Renderer",
+    "description": "Create a renderAnnotatedGrid(canvas, grid, highlights) function that renders a small CA grid (32x32) on a canvas with cell-level coloring. Dead cells = dark (#1a1a1a), alive cells = white (#e0e0e0). The grid should have visible cell borders and be sized so individual cells are clearly distinguishable (~8-10px per cell).",
+    "steps": [
+      "renderAnnotatedGrid(canvas, grid, []) renders a 32x32 grid with dead=dark alive=white cells",
+      "Each cell is at least 8px wide with a 1px border/gap between cells for visual clarity",
+      "The canvas is sized appropriately (~280-320px) to fit the walkthrough layout",
+      "Passing an empty highlights array renders the plain grid with no overlays",
+      "The function works with grids of any size (not hardcoded to 32x32) though 32x32 is the default",
+      "renderAnnotatedGrid does not interfere with the existing renderToCanvas function used elsewhere",
+      "Grid renders correctly for Rule 0 (all dead except center column) and Rule 30 (chaotic pattern)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Annotated Grid Renderer",
+    "description": "Add highlight overlay support to renderAnnotatedGrid. Highlights is an array of objects like {type: 'row', index: 5, color: 'rgba(0,255,136,0.3)'} or {type: 'cell', row: 5, col: 10, color: 'rgba(255,100,100,0.4)'} or {type: 'cells', cells: [{row,col},...], color: '...'}. Each highlight draws a semi-transparent colored overlay on the specified cells/rows/columns.",
+    "steps": [
+      "Highlight type 'row' colors an entire row with the specified color overlay",
+      "Highlight type 'col' colors an entire column with the specified color overlay",
+      "Highlight type 'cell' colors a single cell at (row, col)",
+      "Highlight type 'cells' colors an array of {row, col} cell positions",
+      "Multiple highlights can overlap and blend via semi-transparent colors",
+      "Highlights render on top of the base grid (alive/dead cells are still visible underneath)",
+      "A row highlight on row 31 with green overlay visually marks the bottom row of a 32x32 grid",
+      "Highlights with color 'rgba(255,0,0,0.3)' render as a visible red tint over the cells"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Annotated Grid Renderer",
+    "description": "Add bracket/label annotation support to renderAnnotatedGrid via an optional annotations array parameter. Annotations like {type: 'bracket', startCol: 5, endCol: 8, row: 31, label: 'L=4 block'} draw a bracket below/beside the specified cells with a text label. Annotations like {type: 'label', row: 31, text: 'Row 31', side: 'left'} draw text labels on grid edges.",
+    "steps": [
+      "Annotation type 'bracket' draws a horizontal bracket spanning startCol to endCol at the specified row",
+      "The bracket has a text label centered below it in small (#aaa) font",
+      "Annotation type 'label' draws text on the left or right side of the grid at the specified row",
+      "Labels are styled in muted color (#aaa) with a small monospace font",
+      "Brackets use the green accent color (#00ff88) to stand out against the dark grid",
+      "The canvas is sized with enough margin (bottom/left/right) to accommodate annotations without clipping",
+      "A bracket from col 0 to col 3 with label 'L=4' correctly spans 4 cells and shows the label below",
+      "Multiple annotations can coexist without overlapping text"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Stepper Framework",
+    "description": "Create a MetricsLabStepper class that manages the walkthrough state: current walkthrough config, current step index, computed grid, and computed intermediate values. It exposes methods: loadWalkthrough(walkthroughConfig), nextStep(), prevStep(), getCurrentStep(), and getComputedValues(). When loading a walkthrough, it generates the 32x32 grid using the walkthrough's specified rule.",
+    "steps": [
+      "new MetricsLabStepper() creates an instance with null walkthrough and step index 0",
+      "loadWalkthrough(config) stores the config, generates a 32x32 grid using generateGrid(config.rule, 32, 32, generateCenterCell(32)), and resets step index to 0",
+      "getCurrentStep() returns the current step object from the walkthrough config's steps array",
+      "nextStep() increments the step index (clamped to last step), returns new current step",
+      "prevStep() decrements the step index (clamped to 0), returns new current step",
+      "getComputedValues() calls the current step's computeValues(grid) function and returns the result",
+      "The stepper reuses the existing generateGrid, generateCenterCell functions (no duplication)",
+      "loadWalkthrough with a config that has rule=30 produces a recognizable Rule 30 pattern in the grid"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Stepper Framework",
+    "description": "Build the stepper UI in the main content area of panel-lab. It displays: (1) step title with step counter 'Step X of Y', (2) the annotated grid canvas, (3) the pseudocode panel, (4) the narrative text panel, and (5) navigation controls (Prev/Next buttons + progress dots). Wire the UI to the MetricsLabStepper instance.",
+    "steps": [
+      "The main content area shows 'Step 1 of N: [step title]' as a heading when a walkthrough is active",
+      "An annotated grid canvas is rendered to the left of the pseudocode panel (side by side)",
+      "Prev and Next buttons appear at the bottom of the walkthrough area",
+      "Progress dots (filled for visited steps, empty for unvisited) appear between Prev and Next",
+      "Clicking Next advances to the next step, updates the title, grid highlights, pseudocode, and narrative",
+      "Clicking Prev returns to the previous step with correct state",
+      "Prev is disabled (grayed out) on step 1; Next is disabled on the last step",
+      "Left/Right arrow keys also navigate between steps when the lab tab is active",
+      "Selecting a different metric from the sidebar resets to step 1 of the new walkthrough"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Stepper Framework",
+    "description": "Build the pseudocode panel component. It displays an array of pseudocode lines in a dark <pre> block with monospace font. The current step's activeLine index is highlighted with a green background and a '►' marker. Lines not active are dimmed. The panel updates when the step changes.",
+    "steps": [
+      "Pseudocode displays in a <pre> block with monospace font (Courier New or similar), dark background (#111)",
+      "Each line of pseudocode is rendered on its own line with a line number prefix",
+      "The active line (specified by step's activeLine property) has a green-tinted background (rgba(0,255,136,0.15))",
+      "The active line has a '►' marker to the left of the line number",
+      "Non-active lines have dimmed text color (#666) while active line has bright text (#e0e0e0)",
+      "When the step changes, the highlighted line updates to match the new step's activeLine",
+      "The pseudocode panel has a subtle border (1px solid #333) and rounded corners matching theme",
+      "Long pseudocode lines wrap or scroll horizontally without breaking layout",
+      "A step with activeLine: 2 highlights the 3rd line (0-indexed) in the pseudocode block"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Stepper Framework",
+    "description": "Build the narrative panel component below the grid+pseudocode area. It displays the current step's narrative text with dynamic value interpolation. Placeholders like {count_1} in the narrative string are replaced with actual computed values from the step's computeValues() function. Style as a bordered text box with readable font.",
+    "steps": [
+      "Narrative text displays in a bordered panel below the grid/pseudocode row",
+      "The panel has padding, dark background (#1a1a1a), subtle border (#333), and readable text color (#ccc)",
+      "Placeholders in curly braces like {count_1} are replaced with computed values from computeValues(grid)",
+      "A narrative 'Found {alive} alive cells out of {total}' with computeValues returning {alive: 18, total: 32} displays 'Found 18 alive cells out of 32'",
+      "Numeric values are formatted appropriately (integers stay integers, decimals show 4 decimal places)",
+      "The narrative panel updates when the step changes",
+      "If computeValues is not defined for a step, placeholders are left as-is (graceful fallback)",
+      "Text is large enough to read comfortably (14-16px font size)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Simple Metric Walkthroughs",
+    "description": "Create the Entropy walkthrough (METRIC_WALKTHROUGHS entry for 'entropy'). Uses Rule 30, 5 steps: (1) Generate grid and show it plain, (2) Highlight bottom row — count alive vs dead cells, (3) Compute probabilities p(0) and p(1), (4) Apply Shannon formula H = -Σ p log₂ p with active line highlighting, (5) Show final entropy value and interpret (high ≈ 1 means disordered).",
+    "steps": [
+      "Selecting 'Entropy' from the sidebar loads the entropy walkthrough with Rule 30",
+      "Step 1 shows a plain 32x32 Rule 30 grid with narrative explaining what we'll compute",
+      "Step 2 highlights the bottom row (row 31) in green and narrative shows alive/dead counts",
+      "Step 3 shows the probability calculation in pseudocode with active line on p(1) = count_1/total",
+      "Step 4 highlights the Shannon formula line H = -p0*log2(p0) - p1*log2(p1) in pseudocode",
+      "Step 5 shows the final entropy value (should be near 1.0 for Rule 30) with interpretation text",
+      "The pseudocode has at least 6 lines covering: generate grid, count states, compute p, compute H, return H",
+      "Each step's computeValues returns the correct intermediate values used in the narrative",
+      "The entropy value computed in the walkthrough matches computeEntropy(grid) from the main app"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Simple Metric Walkthroughs",
+    "description": "Create the Density walkthrough. Uses Rule 30, 4 steps: (1) Generate grid and show plain, (2) Highlight all alive cells in the bottom row with a colored overlay, (3) Count alive cells and divide by total — show formula ρ = count_1 / N, (4) Show final density value and contrast with what Rule 0 would give (≈0).",
+    "steps": [
+      "Selecting 'Density' loads the density walkthrough with Rule 30",
+      "Step 1 shows the plain grid with introductory narrative about density",
+      "Step 2 highlights alive cells in the bottom row with a distinct color (e.g., red/orange overlay)",
+      "Step 3 pseudocode shows the division formula with active line on ρ = count_1 / N",
+      "Step 4 narrative interprets the density value and mentions that Rule 0 produces density ≈ 0",
+      "The density value computed matches computeDensity(grid) from the main app",
+      "Each step has appropriate computeValues returning count_1, total, and density"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Simple Metric Walkthroughs",
+    "description": "Create the Mean Field walkthrough. Uses Rule 110, 4 steps: (1) Generate grid, (2) Highlight individual rows one by one (showing density varies per generation), (3) Compute density for each row and show averaging formula, (4) Show final mean field value and explain temporal averaging vs single-row density.",
+    "steps": [
+      "Selecting 'Mean Field' loads the walkthrough with Rule 110",
+      "Step 1 shows the plain Rule 110 grid with narrative about time-averaged behavior",
+      "Step 2 highlights 3 different rows (e.g., rows 0, 15, 31) showing density varies across generations",
+      "Step 3 pseudocode shows the averaging loop with active line on mean = sum(row_densities) / num_rows",
+      "Step 4 shows final mean field value and explains how it differs from single-row density",
+      "The computed mean field matches computeMeanField(grid) from the main app",
+      "Narrative mentions that mean field captures long-term average behavior across all generations"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Simple Metric Walkthroughs",
+    "description": "Create the Symmetry walkthrough. Uses Rule 90 (highly symmetric), 5 steps: (1) Generate grid — Rule 90 produces the Sierpinski triangle pattern, (2) Show the grid and its left-right mirror side by side (second canvas or overlay), (3) Highlight matching cells in green, mismatched in red, (4) Count matches and compute symmetry ratio, (5) Show final value (≈1.0 for Rule 90) and contrast with Rule 30 (lower symmetry).",
+    "steps": [
+      "Selecting 'Symmetry' loads the walkthrough with Rule 90",
+      "Step 1 shows the plain Rule 90 Sierpinski triangle grid",
+      "Step 2 narrative explains left-right mirroring and what symmetry measures",
+      "Step 3 highlights matching cells (same in original and mirror) in green and mismatched in red",
+      "Step 4 pseudocode shows count_matches / total_cells with active line",
+      "Step 5 shows high symmetry value for Rule 90 and mentions Rule 30 would score lower",
+      "The computed symmetry matches computeSymmetry(grid) from the main app",
+      "The visual highlighting makes it immediately obvious why Rule 90 is symmetric"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Advanced Metric Walkthroughs",
+    "description": "Create the Lyapunov Exponent walkthrough. Uses Rule 30, 5 steps: (1) Generate original grid, (2) Flip one bit in the initial condition and generate a perturbed grid — show both grids, (3) Highlight cells that differ between the two grids (Hamming distance per row), (4) Show the difference count growing over generations (sensitivity to initial conditions), (5) Compute Lyapunov exponent λ and interpret (positive = chaotic).",
+    "steps": [
+      "Selecting 'Lyapunov' loads the walkthrough with Rule 30",
+      "Step 1 shows the original Rule 30 grid with center-cell initial condition",
+      "Step 2 shows the single-bit flip and both original + perturbed grids (two canvases side by side or overlaid)",
+      "Step 3 highlights differing cells between the two grids using a colored overlay",
+      "Step 4 pseudocode shows the Hamming distance computation with active line on the exponential growth formula",
+      "Step 5 shows the Lyapunov value and explains positive = chaotic, 0 = stable",
+      "The visualization clearly shows the perturbation spreading outward over time",
+      "The computed value is consistent with computeLyapunov() from the main app"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Advanced Metric Walkthroughs",
+    "description": "Create the Compressibility walkthrough. Uses Rule 0 (highly compressible) and Rule 30 (less compressible), 4 steps: (1) Generate Rule 0 grid — mostly uniform, (2) Show run-length encoding (RLE) of a row — e.g., '32 zeros' is very short, (3) Show the RLE of Rule 30's bottom row for contrast — many short runs, (4) Compute compressibility ratio C = 1 - RLE_size/raw_size and interpret.",
+    "steps": [
+      "Selecting 'Compressibility' loads the walkthrough with Rule 0",
+      "Step 1 shows the plain Rule 0 grid (nearly all dead cells)",
+      "Step 2 highlights a single row and shows the RLE representation in narrative (e.g., '0×32')",
+      "Step 3 switches to or shows Rule 30 for contrast, highlighting the same row with many short runs",
+      "Step 4 pseudocode shows the RLE compression formula with computed ratio",
+      "Narrative explains high compressibility = simple patterns, low compressibility = complex",
+      "The computed values are consistent with computeCompressibility() from the main app",
+      "The visual contrast between Rule 0 and Rule 30 makes the concept immediately clear"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Advanced Metric Walkthroughs",
+    "description": "Create the Period walkthrough. Uses Rule 184 (periodic behavior), 4 steps: (1) Generate grid, (2) Highlight last several rows and show they repeat, (3) Show the comparison algorithm — check if row N equals row N-k for various k, (4) Report the detected period or 'aperiodic' and explain what periodicity means for CA behavior.",
+    "steps": [
+      "Selecting 'Period' loads the walkthrough with Rule 184 and center-cell initial condition",
+      "Step 1 shows the grid with narrative about temporal patterns",
+      "Step 2 highlights the last 4-8 rows showing the repeating pattern visually",
+      "Step 3 pseudocode shows the period detection algorithm with row comparison",
+      "Step 4 shows the detected period value and explains periodic vs aperiodic behavior",
+      "The detected period matches detectPeriod(grid) from the main app",
+      "If the rule is aperiodic, the narrative explains what that means",
+      "Row highlighting makes the repetition pattern visually obvious"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Advanced Metric Walkthroughs",
+    "description": "Create the Wolfram Class walkthrough. Uses 4 example rules (one from each class), 5 steps: (1) Show all 4 grids in a 2x2 mini-grid layout, (2) Explain Class I (uniform) with Rule 0 highlighted, (3) Explain Class II (periodic) with Rule 4 highlighted, (4) Explain Class III (chaotic) with Rule 30 highlighted, (5) Explain Class IV (complex) with Rule 110 highlighted. Show the classification heuristic.",
+    "steps": [
+      "Selecting 'Wolfram Class' loads the walkthrough showing 4 example rules",
+      "Step 1 displays 4 small grids in a 2x2 layout for Rules 0, 4, 30, and 110",
+      "Step 2 highlights the Rule 0 grid and explains Class I: uniform/fixed behavior",
+      "Step 3 highlights Rule 4 and explains Class II: periodic/repeating structures",
+      "Step 4 highlights Rule 30 and explains Class III: chaotic/random-looking",
+      "Step 5 highlights Rule 110 and explains Class IV: complex/edge-of-chaos structures",
+      "Each class is labeled with its Wolfram class color (I=green, II=blue, III=red, IV=orange)",
+      "Pseudocode shows the classification criteria (entropy, density, symmetry thresholds)",
+      "The assigned classes match classifyWolfram() from the main app for each example rule"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Block Entropy Family",
+    "description": "Create the Block Entropy walkthrough. Uses Rule 30, 5 steps: (1) Generate grid and highlight bottom row, (2) Show how to extract blocks of length L (e.g., L=3) — use bracket annotations to mark consecutive 3-cell groups, (3) Count frequency of each block pattern (e.g., '010' appears 5 times), (4) Compute H(L) = -Σ p(b) log₂ p(b) for this block length, (5) Show the H(L) curve for L=1..8 and explain what it reveals about spatial structure.",
+    "steps": [
+      "Selecting 'Block Entropy' loads the walkthrough with Rule 30",
+      "Step 1 shows the grid and highlights the bottom row for analysis",
+      "Step 2 uses bracket annotations to mark 3-cell blocks along the row (e.g., cells 0-2, 1-3, 2-4)",
+      "Step 3 narrative shows a frequency table of observed block patterns",
+      "Step 4 pseudocode shows H(L) Shannon formula applied to block frequencies",
+      "Step 5 shows the H(L) vs L curve and explains increasing entropy with block length",
+      "The bracket annotations clearly show overlapping blocks (sliding window)",
+      "Computed H(L) values match computeBlockEntropyForRow() and computeBlockEntropyArray() from the main app"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Block Entropy Family",
+    "description": "Create the Entropy Rate walkthrough. Uses Rule 30, 4 steps: (1) Recap H(L) from block entropy (show the curve), (2) Explain that entropy rate h = lim H(L+1) - H(L) — the new information per added cell, (3) Show the successive differences H(2)-H(1), H(3)-H(2), etc. converging, (4) Show the final h value and interpret (high h = genuinely random new info per cell).",
+    "steps": [
+      "Selecting 'Entropy Rate' loads the walkthrough with Rule 30",
+      "Step 1 shows the H(L) curve from block entropy as context",
+      "Step 2 pseudocode shows h = H(L+1) - H(L) with the difference calculation highlighted",
+      "Step 3 narrative shows the successive differences converging toward the rate",
+      "Step 4 shows the final entropy rate value and interprets it",
+      "The computed h value matches computeEntropyRate() from the main app",
+      "Narrative explains that h close to 1 means each new cell carries nearly 1 bit of genuine information",
+      "The walkthrough builds on block entropy concepts without re-explaining them from scratch"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Block Entropy Family",
+    "description": "Create the Excess Entropy walkthrough. Uses Rule 110 (high structural complexity), 4 steps: (1) Show H(L) curve and the linear asymptote h·L, (2) Explain excess entropy E = H(L) - h·L as the gap between actual block entropy and the linear extrapolation, (3) Show the linear fit to the tail of H(L) and the y-intercept = E, (4) Interpret E: high E means the rule stores a lot of information in spatial correlations (structural complexity beyond randomness).",
+    "steps": [
+      "Selecting 'Excess Entropy' loads the walkthrough with Rule 110",
+      "Step 1 shows the H(L) curve and the linear asymptote line h·L",
+      "Step 2 pseudocode shows E = H(L) - h·L formula with active line",
+      "Step 3 shows the linear fit to H(L) for large L and highlights the y-intercept E",
+      "Step 4 interprets E value — high E means rich spatial structure / memory effects",
+      "The computed E matches computeExcessEntropy() from the main app",
+      "Narrative contrasts Rule 110 (high E, complex) with Rule 30 (lower E, chaotic but less structured)",
+      "The visualization of the gap between H(L) and the asymptote makes E visually intuitive"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Comparison Panel",
+    "description": "Build a comparison panel component that appears after completing a walkthrough (reaching the last step). It shows the same metric computed on 2-3 contrasting rules side by side. Each comparison shows a small grid thumbnail, the rule number, and the metric value. This gives users intuition for the full range of values.",
+    "steps": [
+      "After reaching the last step of any walkthrough, a 'Compare Rules' panel appears below the narrative",
+      "The panel shows 2-3 rules side by side in a horizontal flex layout",
+      "Each comparison card has: a small grid canvas (~120px), 'Rule N' label, and the metric value",
+      "The metric value is color-coded (green for high, red for low, or appropriate scale)",
+      "The rules chosen for comparison demonstrate a clear range (e.g., for entropy: Rule 0 ≈ 0, Rule 30 ≈ 1)",
+      "Each walkthrough config specifies its own comparison rules (not hardcoded globally)",
+      "Clicking a comparison card opens the full rule modal (reuses existing openModal function)",
+      "The comparison panel has a heading like 'How does entropy vary across rules?'"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Comparison Panel",
+    "description": "Wire the comparison panel to all 11 walkthrough configs. Each walkthrough specifies 2-3 comparison rules that demonstrate the full range of that metric. Ensure the comparison panel renders correctly for every metric and uses the actual computed values from precomputedMetrics.",
+    "steps": [
+      "Entropy comparison shows: Rule 0 (H≈0), Rule 30 (H≈1), Rule 110 (H mid-range)",
+      "Density comparison shows: Rule 0 (ρ≈0), Rule 255 (ρ≈1), Rule 30 (ρ≈0.5)",
+      "Lyapunov comparison shows: Rule 0 (λ=0), Rule 30 (λ>0), Rule 110 (λ moderate)",
+      "Wolfram Class comparison shows one rule from each class: Rule 0 (I), Rule 4 (II), Rule 30 (III), Rule 110 (IV)",
+      "All 11 walkthroughs have comparison rules defined and the panel renders correctly",
+      "Metric values in the comparison panel match precomputedMetrics values for those rules",
+      "The comparison gives clear visual intuition for what low/mid/high values look like"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Polish & Testing",
+    "description": "Ensure the Metrics Lab layout works well at different viewport sizes, scrolls properly for long content, and integrates cleanly with the rest of the app. The stepper should not break if the user switches tabs mid-walkthrough and returns. Add smooth transitions between steps.",
+    "steps": [
+      "The Metrics Lab layout doesn't overflow at viewport width 1024px (common laptop)",
+      "Content scrolls vertically if the walkthrough content is taller than the viewport",
+      "Switching away from the Lab tab and returning preserves the current walkthrough state (metric, step)",
+      "Step transitions have a subtle fade or slide animation (CSS transition, 200-300ms)",
+      "The sidebar remains visible and scrollable if all 11 metrics don't fit vertically",
+      "Grid canvas and pseudocode panel are properly aligned side-by-side",
+      "No horizontal scrollbar appears at standard viewport widths (1024px+)",
+      "The Lab tab works correctly after the page's initial 256-rule precomputation finishes"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Polish & Testing",
+    "description": "Write a Playwright test suite for the Metrics Lab tab. Tests should cover: tab switching, metric selection, stepper navigation (next/prev/keyboard), pseudocode highlighting, narrative value interpolation, comparison panel appearance, and integration with existing tabs.",
+    "steps": [
+      "Test: Clicking 'Metrics Lab' tab switches to the lab panel",
+      "Test: Selecting 'Entropy' from sidebar loads the entropy walkthrough at step 1",
+      "Test: Clicking Next advances to step 2 with updated title, pseudocode highlight, and narrative",
+      "Test: Clicking Prev from step 2 returns to step 1",
+      "Test: Prev button is disabled on step 1, Next button is disabled on last step",
+      "Test: Pseudocode panel shows highlighted active line for the current step",
+      "Test: Narrative text contains interpolated numeric values (not raw placeholders)",
+      "Test: Reaching the last step shows the comparison panel with rule thumbnails",
+      "Test: All 11 metrics can be selected and load their walkthroughs without errors",
+      "Test: Switching to another tab and back preserves walkthrough state",
+      "Test: The annotated grid canvas has non-zero dimensions and visible content",
+      "All tests pass with 0 failures"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Polish & Testing",
+    "description": "Run all existing test suites (tab-navigation, metric-tooltips, block-entropy-display, phase-explorer, light-cones) to confirm no regressions from the Metrics Lab changes. Fix any failures.",
+    "steps": [
+      "tab-navigation tests pass (15/15 or current count)",
+      "metric-tooltips tests pass (21/21)",
+      "block-entropy-display tests pass (7/7)",
+      "phase-explorer tests pass (13/13)",
+      "light-cones tests pass (23/23)",
+      "No new console errors appear when loading the page with the Metrics Lab tab",
+      "The page load time is not significantly degraded by the new tab (< 1 second increase)"
+    ],
+    "passes": false
+  }
+]
