@@ -2,6 +2,8 @@
 
 A self-contained HTML application for exploring all 256 elementary cellular automata rules.
 
+Project is live at https://paraschopra.github.io/1d-ca/
+
 ## Project Structure
 
 ```
