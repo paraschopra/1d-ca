@@ -1,0 +1,21 @@
+Sprint v3 — Metric Tooltips
+============================
+
+Started: 2026-02-09
+
+User Spec (verbatim):
+"add tooltips to explain what different metrics mean in detail (like entropy, symmetry, etc.) - i want this sprint to be a quick one"
+
+Task Count: 5 tasks across 3 categories
+  - Tooltip Definitions: 1 task (content for all 10 metrics)
+  - Tooltip CSS Component: 1 task (hover-based pure CSS tooltip)
+  - Integration: 3 tasks (rule cards, modal table, phase explorer & rule map)
+
+Project Context:
+  - v2 has 10 metrics displayed across 4 UI surfaces: rule cards, modal detail, phase explorer checkboxes, rule map dropdowns
+  - The 10 metrics: Entropy, Density, Mean Field, Wolfram Class, Symmetry, Lyapunov Exponent, Compressibility, Period, Entropy Rate (h), Excess Entropy (E)
+  - App is a single self-contained HTML file (no external deps)
+  - Dark theme: #0a0a0a bg, #1a1a1a panels, #00ff88 accent
+
+Next Steps:
+  - Implement tasks sequentially (definitions → CSS → integrations)

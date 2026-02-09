@@ -1,0 +1,80 @@
+[
+  {
+    "category": "Tooltip Definitions",
+    "description": "Create a centralized metricTooltips object mapping each metric key to a plain-English explanation covering: what it measures, how it's computed (brief), value range, and what high/low values mean for CA behavior",
+    "steps": [
+      "A metricTooltips object exists in the JS with keys for all 10 metrics: entropy, density, meanField, wolframClass, symmetry, lyapunov, compressibility, period, entropyRate, excessEntropy",
+      "Each tooltip is 1-3 sentences long, written for a curious non-expert audience",
+      "Entropy tooltip explains Shannon entropy of cell states and that high=disordered, low=uniform",
+      "Density tooltip explains fraction of alive cells",
+      "Mean Field tooltip explains time-averaged density across all generations",
+      "Wolfram Class tooltip explains the 4-class behavioral classification (I=uniform, II=periodic, III=chaotic, IV=complex)",
+      "Symmetry tooltip explains left-right mirror symmetry of the spacetime grid",
+      "Lyapunov Exponent tooltip explains sensitivity to initial conditions and that positive=chaotic",
+      "Compressibility tooltip explains run-length encoding ratio and that high=simple patterns",
+      "Period tooltip explains temporal repetition and what aperiodic means",
+      "Entropy Rate (h) tooltip explains bits of new information per cell per time step",
+      "Excess Entropy (E) tooltip explains total stored information / structural complexity beyond randomness"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Tooltip CSS Component",
+    "description": "Add a pure-CSS tooltip component that appears on hover over metric labels, styled to match the dark theme (#1a1a1a background, #00ff88 accent, light text)",
+    "steps": [
+      "A .has-tooltip CSS class can be applied to any element to enable tooltip behavior",
+      "Tooltip text is stored in a data-tooltip attribute on the element",
+      "On hover, a tooltip box appears near the element with the explanation text",
+      "Tooltip has dark background (#222 or #1a1a1a), light text (#ccc), subtle green border, and rounded corners",
+      "Tooltip has a small arrow/caret pointing to the source element",
+      "Tooltip does not overflow the viewport — it repositions or constrains to stay visible",
+      "Tooltip has a slight delay before appearing (200-300ms) to avoid flickering on casual mouse movement",
+      "Tooltip disappears when the mouse leaves the element",
+      "Tooltip text wraps nicely at around 250-300px max width",
+      "Tooltip works on both the metric-label spans and table td elements"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Integration — Rule Cards",
+    "description": "Add tooltip data attributes to metric labels in the formatMetricsHTML function so hovering over a metric name on any rule card shows its explanation",
+    "steps": [
+      "Each metric-label span in the card (Entropy, Density, Symmetry, Period, h, E) has a data-tooltip attribute with the corresponding explanation",
+      "Each metric-label span has the has-tooltip CSS class applied",
+      "Hovering over 'Entropy:' on any rule card shows the entropy explanation tooltip",
+      "Hovering over 'h:' on a card shows the entropy rate explanation",
+      "Hovering over 'E:' shows the excess entropy explanation",
+      "The Wolfram Class badge also has a tooltip explaining the classification system",
+      "Tooltips do not interfere with clicking the card to open the modal",
+      "Tooltips work correctly on all 256 cards without performance issues"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Integration — Modal Metrics Table",
+    "description": "Add tooltip data attributes to the metric name cells in the modal detail view's metrics table so hovering over any metric name shows its explanation",
+    "steps": [
+      "Each <td> containing a metric name in the modal table has a data-tooltip attribute with the explanation",
+      "Each metric name td has the has-tooltip CSS class applied",
+      "Hovering over 'Entropy' in the modal table shows the full entropy explanation",
+      "Hovering over 'Lyapunov Exp.' shows the Lyapunov exponent explanation",
+      "All 10 metrics in the modal table have tooltips",
+      "Tooltips are readable over the modal background and do not get clipped by the modal edges",
+      "The tooltip z-index is high enough to appear above the modal overlay"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Integration — Phase Explorer & Rule Map",
+    "description": "Add tooltips to the Phase Explorer metric checkboxes and the Rule Map axis dropdown options so users can understand metrics when selecting them",
+    "steps": [
+      "Each checkbox label in the Phase Explorer has a data-tooltip and has-tooltip class for its metric",
+      "Hovering over a checkbox label (e.g., 'Lyapunov') shows the Lyapunov explanation",
+      "All 6 Phase Explorer metric checkboxes have tooltips",
+      "The Rule Map X-axis and Y-axis dropdown labels/selects have tooltips explaining 'Choose a metric for this axis'",
+      "When hovering over the dropdown option labels, the selected metric's tooltip is visible (via a small info icon or help text near each dropdown that shows the current metric's description)",
+      "Tooltips do not interfere with checkbox toggling or dropdown selection"
+    ],
+    "passes": false
+  }
+]
