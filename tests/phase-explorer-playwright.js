@@ -5,7 +5,7 @@ const path = require('path');
     const browser = await chromium.launch({ headless: true });
     const page = await browser.newPage();
 
-    const appPath = path.join(__dirname, '..', 'src', 'index.html');
+    const appPath = path.join(__dirname, '..', 'src', 'src/index.html');
     await page.goto(`file://${appPath}`);
 
     console.log('\n' + '='.repeat(60));

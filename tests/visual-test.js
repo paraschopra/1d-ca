@@ -12,7 +12,7 @@ async function visualTest() {
         await page.setViewportSize({ width: 1400, height: 2000 });
 
         // Navigate to index.html
-        const htmlPath = path.resolve(__dirname, '../index.html');
+        const htmlPath = path.resolve(__dirname, '../src/index.html');
         await page.goto(`file://${htmlPath}`, { waitUntil: 'networkidle' });
 
         // Wait a bit for rendering to complete

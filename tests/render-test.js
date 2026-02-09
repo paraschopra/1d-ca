@@ -4,7 +4,7 @@ const path = require('path');
 
 async function testRendering() {
     try {
-        const htmlPath = path.resolve(__dirname, '../index.html');
+        const htmlPath = path.resolve(__dirname, '../src/index.html');
         const html = fs.readFileSync(htmlPath, 'utf8');
 
         // Mock HTMLCanvasElement

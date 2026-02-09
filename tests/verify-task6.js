@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 async function verifyTask6() {
-    const htmlPath = path.resolve(__dirname, '../index.html');
+    const htmlPath = path.resolve(__dirname, '../src/index.html');
     const html = fs.readFileSync(htmlPath, 'utf8');
 
     const dom = new JSDOM(html, {

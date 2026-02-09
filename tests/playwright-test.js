@@ -1,7 +1,7 @@
 const { chromium } = require('playwright');
 const path = require('path');
 
-const FILE_URL = 'file://' + path.resolve(__dirname, '..', 'src', 'index.html');
+const FILE_URL = 'file://' + path.resolve(__dirname, '..', 'src', 'src/index.html');
 
 let browser, page;
 let passed = 0, failed = 0;

@@ -5,7 +5,7 @@ async function runTests() {
     const browser = await chromium.launch();
     const page = await browser.newPage();
 
-    const filePath = 'file://' + path.resolve(__dirname, '../index.html');
+    const filePath = 'file://' + path.resolve(__dirname, '../src/index.html');
     await page.goto(filePath);
 
     const results = [];

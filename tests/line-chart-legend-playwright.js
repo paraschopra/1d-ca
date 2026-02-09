@@ -6,7 +6,7 @@ const path = require('path');
     const page = await browser.newPage();
 
     // Navigate directly to the v2 app
-    const appPath = path.join(__dirname, '..', 'src', 'index.html');
+    const appPath = path.join(__dirname, '..', 'src', 'src/index.html');
     await page.goto(`file://${appPath}`);
 
     // Wait for page to load

@@ -6,7 +6,8 @@ A self-contained HTML application for exploring all 256 elementary cellular auto
 
 ```
 1d-ca/
-├── index.html                         # Main app (single self-contained HTML/CSS/JS file)
+├── src/
+│   └── index.html                     # Main app (single self-contained HTML/CSS/JS file)
 ├── tests/                             # Playwright headless browser tests
 ├── sprints/
 │   ├── initial/                       # v1 sprint tracking
