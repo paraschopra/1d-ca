@@ -43,6 +43,9 @@
             display: flex;
             gap: 5px;
             flex-wrap: wrap;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
         .tab {
@@ -91,6 +94,9 @@
             align-items: center;
             gap: 20px;
             flex-wrap: wrap;
+            position: sticky;
+            top: 52px;
+            z-index: 99;
         }
 
         .controls label {
@@ -304,6 +310,41 @@
             font-family: 'Courier New', monospace;
             color: #888;
             margin-bottom: 20px;
+        }
+
+        .modal-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            background: #222;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin: 15px 0;
+        }
+
+        .modal-controls label {
+            font-size: 0.85em;
+            color: #aaa;
+        }
+
+        .modal-controls input[type="range"] {
+            width: 100px;
+            accent-color: #00ff88;
+        }
+
+        .modal-controls .density-value {
+            min-width: 35px;
+            text-align: right;
+            color: #00ff88;
+            font-weight: 600;
+            font-size: 0.85em;
+        }
+
+        .modal-controls .btn-randomize {
+            padding: 6px 14px;
+            font-size: 0.85em;
         }
 
         .modal-canvas-container {
@@ -657,6 +698,12 @@
             <button class="modal-close" id="modalClose">&times;</button>
             <div class="modal-title" id="modalTitle"></div>
             <div class="modal-binary" id="modalBinary"></div>
+            <div class="modal-controls" id="modalControls">
+                <label>Density:</label>
+                <input type="range" id="modalDensitySlider" min="0" max="100" value="50">
+                <span class="density-value" id="modalDensityValue">50%</span>
+                <button class="btn-randomize" id="modalRandomizeBtn">Randomize</button>
+            </div>
             <div class="modal-canvas-container">
                 <canvas id="modalCanvas"></canvas>
             </div>
@@ -688,8 +735,8 @@
             meanField: 'Time-averaged density: \u03C1\u0304 = (1/T) \u03A3\u209C \u03C1(t), averaging the row density across all T generations. Unlike final density, this captures transient dynamics. Useful for detecting rules whose density drifts over time.',
             wolframClass: 'Wolfram\u2019s 4-class behavioral classification. Class I: converges to uniform state (\u03C1\u21920 or 1). Class II: settles into periodic/stable structures (low H, finite period). Class III: chaotic, pseudo-random (H\u22481, aperiodic). Class IV: complex localized structures, gliders, long transients (moderate H, aperiodic).',
             symmetry: 'Spatial mirror symmetry: S = (1/N) \u03A3 [x(i) == x(N\u22121\u2212i)], fraction of cells matching their left-right mirror counterpart across all rows. S=1 means perfectly symmetric; S=0.5 is expected for random patterns. Center-cell initial conditions often produce S=1.',
-            lyapunov: 'Lyapunov exponent: \u03BB = (1/T) \u03A3 log\u2082(d(t)/d(t\u22121)), measuring how perturbation distance d(t) (Hamming distance between original and 1-bit-flipped grids) grows per generation. \u03BB>0 means chaotic (perturbations grow exponentially); \u03BB\u22480 means stable/periodic; \u03BB<0 means perturbations shrink.',
-            compressibility: 'RLE compression ratio: C = 1 \u2212 (RLE_size / raw_size), where RLE_size counts (value, count) pairs. C\u22481 means highly compressible, simple repetitive patterns. C\u22480 means incompressible, random or complex. Class I rules score high C; Class III score near 0.',
+            lyapunov: 'Lyapunov exponent: \u03BB = (1/T) \u03A3 log\u2082(d(t)/d(t\u22121)), measuring how perturbation distance d(t) (Hamming distance between original and 1-bit-flipped grids) grows per generation. \u03BB>0 means chaotic (perturbations grow exponentially); \u03BB\u22480 means stable/periodic; \u03BB<0 means perturbations shrink. When d(t) drops to 0 (perturbation dies out, e.g. absorbing rules like 237), it is floored at 0.5 so the log ratio is computable and yields a negative \u03BB, correctly reflecting stability.',
+            compressibility: 'RLE compression ratio: C = 1 \u2212 (RLE_size / raw_size), where RLE_size = 2 \u00D7 (number of runs). Ranges from \u22121 to 1. C\u22481: highly compressible (e.g. all-black grid has 1 run \u2192 C\u22481). C\u22480: incompressible random patterns. C<0: alternating patterns where RLE is larger than raw data (e.g. 0,1,0,1\u2026 has N runs of length 1, so RLE_size = 2N > N \u2192 C = \u22121). Class I rules score high C; Class III may score near 0 or negative.',
             period: 'Temporal period: smallest p such that row(t) = row(t\u2212p) for all late rows. Period 1 = static (fixed point). Period 2 = blinking. Higher periods = oscillating structures. "Aperiodic" = no repeat found within the grid, typical of chaotic (III) or complex (IV) rules.',
             entropyRate: 'Entropy rate: h = lim H(L)/L as L\u2192\u221E, approximated as the average of H(L)\u2212H(L\u22121) for large block sizes (L=6,7,8). Measured in bits/cell. h\u22481.0 means each cell is maximally unpredictable; h\u22480 means highly structured. Separates randomness from structure when compared with excess entropy E.',
             excessEntropy: 'Excess entropy: E = lim [H(L) \u2212 h\u00B7L] as L\u2192\u221E, the y-intercept of the linear fit to block entropy H(L) vs L. Measures total stored information / spatial correlations beyond pure randomness. E\u22480 for both uniform (Class I) and random (Class III) rules. E>0 for complex structured rules (Class IV) that have long-range correlations.',
@@ -791,7 +838,6 @@
             const gridB = generateGrid(ruleNumber, width, generations, perturbedConfig);
 
             let sumLogRatio = 0;
-            let validGens = 0;
             let prevDistance = 1;
 
             for (let gen = 1; gen < generations; gen++) {
@@ -800,15 +846,14 @@
                     if (gridA[gen][i] !== gridB[gen][i]) distance++;
                 }
 
-                if (distance > 0 && prevDistance > 0) {
-                    sumLogRatio += Math.log2(distance / prevDistance);
-                    validGens++;
-                }
-
-                if (distance > 0) prevDistance = distance;
+                // Floor at 0.5 so perturbation death yields negative λ
+                // instead of being silently skipped
+                const d = Math.max(distance, 0.5);
+                sumLogRatio += Math.log2(d / prevDistance);
+                prevDistance = d;
             }
 
-            return validGens > 0 ? sumLogRatio / validGens : 0;
+            return (generations > 1) ? sumLogRatio / (generations - 1) : 0;
         }
 
         function computeCompressibility(grid) {
@@ -1816,8 +1861,8 @@
             const container = document.getElementById('blockEntropyChart');
             container.innerHTML = '';
 
-            const width = 400, height = 250;
-            const margins = { top: 30, right: 80, bottom: 40, left: 50 };
+            const width = 480, height = 280;
+            const margins = { top: 30, right: 170, bottom: 40, left: 50 };
             const plotWidth = width - margins.left - margins.right;
             const plotHeight = height - margins.top - margins.bottom;
 
@@ -1950,27 +1995,95 @@
                 svg.appendChild(circle);
             });
 
-            // Annotations: h and E values
+            // Legend + annotations
+            const legendX = margins.left + plotWidth + 12;
             const annotGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             annotGroup.setAttribute('class', 'annotations');
 
+            // Legend: measured H(L)
+            const legendLine1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            legendLine1.setAttribute('x1', legendX);
+            legendLine1.setAttribute('y1', margins.top + 10);
+            legendLine1.setAttribute('x2', legendX + 18);
+            legendLine1.setAttribute('y2', margins.top + 10);
+            legendLine1.setAttribute('stroke', '#00ff88');
+            legendLine1.setAttribute('stroke-width', '2');
+            annotGroup.appendChild(legendLine1);
+            const legendDot1 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            legendDot1.setAttribute('cx', legendX + 9);
+            legendDot1.setAttribute('cy', margins.top + 10);
+            legendDot1.setAttribute('r', 2.5);
+            legendDot1.setAttribute('fill', '#00ff88');
+            annotGroup.appendChild(legendDot1);
+            const legendLabel1 = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            legendLabel1.setAttribute('x', legendX + 23);
+            legendLabel1.setAttribute('y', margins.top + 14);
+            legendLabel1.setAttribute('fill', '#ccc');
+            legendLabel1.setAttribute('font-size', '10');
+            legendLabel1.textContent = 'Measured H(L)';
+            annotGroup.appendChild(legendLabel1);
+
+            // Legend: linear fit
+            const legendLine2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            legendLine2.setAttribute('x1', legendX);
+            legendLine2.setAttribute('y1', margins.top + 28);
+            legendLine2.setAttribute('x2', legendX + 18);
+            legendLine2.setAttribute('y2', margins.top + 28);
+            legendLine2.setAttribute('stroke', '#ff9966');
+            legendLine2.setAttribute('stroke-width', '1.5');
+            legendLine2.setAttribute('stroke-dasharray', '4,3');
+            annotGroup.appendChild(legendLine2);
+            const legendLabel2 = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            legendLabel2.setAttribute('x', legendX + 23);
+            legendLabel2.setAttribute('y', margins.top + 32);
+            legendLabel2.setAttribute('fill', '#ccc');
+            legendLabel2.setAttribute('font-size', '10');
+            legendLabel2.textContent = 'Fit: h\u00B7L + E';
+            annotGroup.appendChild(legendLabel2);
+
+            // Divider
+            const divider = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            divider.setAttribute('x1', legendX);
+            divider.setAttribute('y1', margins.top + 44);
+            divider.setAttribute('x2', legendX + 150);
+            divider.setAttribute('y2', margins.top + 44);
+            divider.setAttribute('stroke', '#444');
+            divider.setAttribute('stroke-width', '0.5');
+            annotGroup.appendChild(divider);
+
+            // h value + description
             const hText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            hText.setAttribute('x', margins.left + plotWidth + 5);
-            hText.setAttribute('y', margins.top + 15);
+            hText.setAttribute('x', legendX);
+            hText.setAttribute('y', margins.top + 60);
             hText.setAttribute('fill', '#ff9966');
             hText.setAttribute('font-size', '11');
             hText.setAttribute('font-family', 'monospace');
             hText.textContent = `h = ${h.toFixed(3)}`;
             annotGroup.appendChild(hText);
+            const hDesc = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            hDesc.setAttribute('x', legendX);
+            hDesc.setAttribute('y', margins.top + 74);
+            hDesc.setAttribute('fill', '#888');
+            hDesc.setAttribute('font-size', '9');
+            hDesc.textContent = h < 0.1 ? 'slope: predictable' : h > 0.7 ? 'slope: unpredictable' : 'slope: moderate';
+            annotGroup.appendChild(hDesc);
 
+            // E value + description
             const eText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            eText.setAttribute('x', margins.left + plotWidth + 5);
-            eText.setAttribute('y', margins.top + 30);
+            eText.setAttribute('x', legendX);
+            eText.setAttribute('y', margins.top + 94);
             eText.setAttribute('fill', '#ff9966');
             eText.setAttribute('font-size', '11');
             eText.setAttribute('font-family', 'monospace');
             eText.textContent = `E = ${E.toFixed(3)}`;
             annotGroup.appendChild(eText);
+            const eDesc = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            eDesc.setAttribute('x', legendX);
+            eDesc.setAttribute('y', margins.top + 108);
+            eDesc.setAttribute('fill', '#888');
+            eDesc.setAttribute('font-size', '9');
+            eDesc.textContent = E < 0.1 ? 'intercept: no memory' : E > 1.0 ? 'intercept: rich structure' : 'intercept: some structure';
+            annotGroup.appendChild(eDesc);
 
             svg.appendChild(annotGroup);
 
@@ -1978,13 +2091,49 @@
         }
 
         // Modal
+        let currentModalRule = null;
+        let modalDensity = 0.5;
+
+        function rerenderModal(ruleNumber, density) {
+            const initialConfig = generateRandom(512, density);
+            const grid = generateGrid(ruleNumber, 512, 512, initialConfig);
+            const modalCanvas = document.getElementById('modalCanvas');
+            renderToCanvas(grid, modalCanvas);
+
+            const metricsInitConfig = generateRandom(GRID_SIZE, density);
+            const metricsGrid = generateGrid(ruleNumber, GRID_SIZE, GENERATIONS, metricsInitConfig);
+            const metrics = computeAllMetrics(ruleNumber, metricsGrid, metricsInitConfig);
+
+            const metricsTableEl = document.getElementById('metricsTable');
+            metricsTableEl.innerHTML = `
+                <tr><td class="has-tooltip" data-tooltip="${metricTooltips.entropy}">Entropy</td><td>${metrics.entropy.toFixed(4)}</td></tr>
+                <tr><td class="has-tooltip" data-tooltip="${metricTooltips.density}">Density</td><td>${(metrics.density * 100).toFixed(2)}%</td></tr>
+                <tr><td class="has-tooltip" data-tooltip="${metricTooltips.meanField}">Mean Field</td><td>${metrics.meanField.toFixed(4)}</td></tr>
+                <tr><td class="has-tooltip" data-tooltip="${metricTooltips.wolframClass}">Wolfram Class</td><td>${metrics.wolframClass}</td></tr>
+                <tr><td class="has-tooltip" data-tooltip="${metricTooltips.symmetry}">Symmetry</td><td>${metrics.symmetry.toFixed(4)}</td></tr>
+                <tr><td class="has-tooltip" data-tooltip="${metricTooltips.lyapunov}">Lyapunov Exp.</td><td>${metrics.lyapunov.toFixed(4)}</td></tr>
+                <tr><td class="has-tooltip" data-tooltip="${metricTooltips.compressibility}">Compressibility</td><td>${metrics.compressibility.toFixed(4)}</td></tr>
+                <tr><td class="has-tooltip" data-tooltip="${metricTooltips.period}">Period</td><td>${metrics.period}</td></tr>
+                <tr><td class="has-tooltip" data-tooltip="${metricTooltips.entropyRate}">Entropy Rate</td><td>${metrics.entropyRate.toFixed(4)}</td></tr>
+                <tr><td class="has-tooltip" data-tooltip="${metricTooltips.excessEntropy}">Excess Entropy</td><td>${metrics.excessEntropy.toFixed(4)}</td></tr>
+            `;
+
+            renderBlockEntropyChart(metrics.blockEntropy, metrics.entropyRate, metrics.excessEntropy);
+        }
+
         function openModal(ruleNumber, forceCenterCell = false) {
+            currentModalRule = ruleNumber;
             const lookupTable = ruleToLookupTable(ruleNumber);
             const useCenter = forceCenterCell || currentMode === 'center';
             const initialConfig = useCenter ?
                 generateCenterCell(512) :
                 generateRandom(512, currentDensity);
             const grid = generateGrid(ruleNumber, 512, 512, initialConfig);
+
+            // Sync modal density slider with current density
+            modalDensity = currentDensity;
+            document.getElementById('modalDensitySlider').value = Math.round(modalDensity * 100);
+            document.getElementById('modalDensityValue').textContent = Math.round(modalDensity * 100) + '%';
 
             document.getElementById('modalTitle').textContent = `Rule ${ruleNumber}`;
             document.getElementById('modalBinary').textContent = `Binary: ${ruleNumber.toString(2).padStart(8, '0')}`;
@@ -2156,6 +2305,22 @@
         });
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') closeModal();
+        });
+
+        // Modal density controls
+        document.getElementById('modalDensitySlider').addEventListener('input', function() {
+            modalDensity = parseInt(this.value) / 100;
+            document.getElementById('modalDensityValue').textContent = this.value + '%';
+        });
+        document.getElementById('modalDensitySlider').addEventListener('change', function() {
+            if (currentModalRule !== null) {
+                rerenderModal(currentModalRule, modalDensity);
+            }
+        });
+        document.getElementById('modalRandomizeBtn').addEventListener('click', function() {
+            if (currentModalRule !== null) {
+                rerenderModal(currentModalRule, modalDensity);
+            }
         });
 
         // Hash change listener
