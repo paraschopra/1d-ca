@@ -26,4 +26,48 @@ Implementation Log:
   - Task 5 (Phase + Rule Map): 6 phase checkbox labels + 2 info icons (ⓘ) next to axis dropdowns
   - 21/21 Playwright tests pass, no regressions in existing tests
 
-All tasks complete.
+All tooltip tasks complete.
+
+Post-Sprint Session: Metric Fixes, Chart Improvements, UI Enhancements
+=======================================================================
+Date: 2026-02-09
+
+Changes made during interactive review session:
+
+1. Lyapunov Exponent Fix (absorbing rules)
+   - Problem: Rules like 237 (all-black absorber) got misleading λ=1 because zero-distance
+     generations were silently skipped, leaving only the brief initial spread in the average
+   - Fix: Floor Hamming distance at 0.5 instead of skipping d(t)=0 generations
+   - Result: Absorbing rules now correctly get negative λ (perturbations die → stability)
+   - Updated tooltip to explain the 0.5 floor behavior
+
+2. Compressibility Tooltip Update
+   - Problem: Tooltip said range was [0,1] but actual range is [-1,1]
+   - C<0 when RLE encoding is larger than raw data (alternating patterns like 0,1,0,1...)
+   - Updated tooltip with full range explanation and concrete example
+
+3. Block Entropy Chart Improvements
+   - Added legend: green solid line = "Measured H(L)", orange dashed = "Fit: h·L + E"
+   - Added descriptive annotations below h and E values:
+     h: "slope: predictable" (<0.1), "slope: moderate" (0.1-0.7), "slope: unpredictable" (>0.7)
+     E: "intercept: no memory" (<0.1), "intercept: some structure" (0.1-1.0), "intercept: rich structure" (>1.0)
+   - Widened chart from 400px to 480px (right margin 80→170px) to accommodate legend
+
+4. Sticky Navigation
+   - Tab bar: position: sticky, top: 0, z-index: 100
+   - Controls bar (density slider + randomize): position: sticky, top: 52px, z-index: 99
+   - Both stay visible while scrolling through the 256-rule grid
+
+5. Modal Density Controls
+   - Added density slider + "Randomize" button inside the expanded rule modal
+   - Slider syncs with main page density on modal open
+   - Auto re-renders grid + all metrics + block entropy chart on slider release (change event)
+   - Randomize button re-renders at current density with new random seed
+
+6. Project Rename & Cleanup
+   - Renamed src/v2-research-tools.html → src/index.html (default entry point)
+   - Deleted src/v1-initial-exploration.html and old src/index.html
+   - Title changed from "1D CA Research Tools" to "1D Cellular Automata Playground"
+   - Added footer: "Project by @paraschopra" with link to x.com/paraschopra
+   - Updated all 31 test/doc files referencing old filename
+   - Rewrote README.md to reflect current state of the project
