@@ -314,6 +314,8 @@
         .modal-canvas-container canvas {
             max-width: 512px;
             width: 100%;
+            display: block;
+            margin: 0 auto;
         }
 
         .modal-section {
@@ -460,8 +462,8 @@
             font-size: 12px;
             font-weight: 400;
             line-height: 1.5;
-            max-width: 280px;
-            min-width: 180px;
+            max-width: 360px;
+            min-width: 200px;
             width: max-content;
             white-space: normal;
             text-align: left;
@@ -667,7 +669,7 @@
                 <table class="metrics-table" id="metricsTable"></table>
             </div>
             <div class="modal-section">
-                <h3>Block Entropy</h3>
+                <h3 class="has-tooltip" data-tooltip="Block entropy H(L): Shannon entropy of all length-L binary patterns in a row, averaged over all time steps. Computed for L=1–8. The slope at large L gives entropy rate h; the y-intercept gives excess entropy E.">Block Entropy</h3>
                 <div id="blockEntropyChart" style="text-align: center;"></div>
             </div>
         </div>
@@ -681,16 +683,17 @@
 
         // Metric tooltip definitions (v3)
         const metricTooltips = {
-            entropy: 'Shannon entropy of cell states across the spacetime grid. Ranges from 0 (all cells identical) to 1 (maximum disorder). High values indicate random or chaotic patterns; low values indicate uniform or simple structures.',
-            density: 'Fraction of cells that are alive (value 1) in the final spacetime grid. Ranges from 0% (all dead) to 100% (all alive).',
-            meanField: 'Average density of alive cells across all generations. Unlike final density, this captures the time-averaged behavior of the rule over its full evolution.',
-            wolframClass: 'Wolfram behavioral classification. Class I: evolves to uniform state. Class II: evolves to periodic/stable structures. Class III: chaotic, seemingly random behavior. Class IV: complex structures with localized interactions.',
-            symmetry: 'Left-right mirror symmetry of the spacetime grid. Ranges from 0 (no symmetry) to 1 (perfectly symmetric). Measures what fraction of cells match their mirror counterpart.',
-            lyapunov: 'Lyapunov exponent — measures sensitivity to initial conditions. Positive values indicate chaotic behavior where small perturbations grow exponentially. Near-zero values indicate stable or periodic dynamics.',
-            compressibility: 'Run-length encoding compression ratio. Ranges from 0 (incompressible, random) to ~1 (highly compressible, simple patterns). High values indicate repetitive structures; low values indicate complex or random patterns.',
-            period: 'Temporal repetition period of the pattern. A period of 1 means the pattern is static. Higher values indicate oscillating structures. "Aperiodic" means no repeating cycle was detected.',
-            entropyRate: 'Entropy rate (h) — bits of new information generated per cell per time step. Derived from block entropy growth at large block sizes. High h (~1.0) means maximally unpredictable; low h (~0) means highly structured.',
-            excessEntropy: 'Excess entropy (E) — total stored information or structural complexity beyond pure randomness. High E indicates rules that build complex, spatially correlated structures. Low E means either simple or purely random behavior.'
+            entropy: 'Shannon entropy: H = -\u03A3 p(s) log\u2082 p(s), where p(s) is the fraction of cells in state s. Ranges 0\u20131 bit. H=0 means all cells identical (uniform); H=1 means perfectly random (equal 0s and 1s). Class III rules score near 1; Class I rules score 0.',
+            density: 'Fraction of alive cells: \u03C1 = (# cells = 1) / (total cells). Ranges 0%\u2013100%. Computed over the full spacetime grid. Rules that die out have \u03C1 \u2248 0; rules with persistent activity have \u03C1 > 0.',
+            meanField: 'Time-averaged density: \u03C1\u0304 = (1/T) \u03A3\u209C \u03C1(t), averaging the row density across all T generations. Unlike final density, this captures transient dynamics. Useful for detecting rules whose density drifts over time.',
+            wolframClass: 'Wolfram\u2019s 4-class behavioral classification. Class I: converges to uniform state (\u03C1\u21920 or 1). Class II: settles into periodic/stable structures (low H, finite period). Class III: chaotic, pseudo-random (H\u22481, aperiodic). Class IV: complex localized structures, gliders, long transients (moderate H, aperiodic).',
+            symmetry: 'Spatial mirror symmetry: S = (1/N) \u03A3 [x(i) == x(N\u22121\u2212i)], fraction of cells matching their left-right mirror counterpart across all rows. S=1 means perfectly symmetric; S=0.5 is expected for random patterns. Center-cell initial conditions often produce S=1.',
+            lyapunov: 'Lyapunov exponent: \u03BB = (1/T) \u03A3 log\u2082(d(t)/d(t\u22121)), measuring how perturbation distance d(t) (Hamming distance between original and 1-bit-flipped grids) grows per generation. \u03BB>0 means chaotic (perturbations grow exponentially); \u03BB\u22480 means stable/periodic; \u03BB<0 means perturbations shrink.',
+            compressibility: 'RLE compression ratio: C = 1 \u2212 (RLE_size / raw_size), where RLE_size counts (value, count) pairs. C\u22481 means highly compressible, simple repetitive patterns. C\u22480 means incompressible, random or complex. Class I rules score high C; Class III score near 0.',
+            period: 'Temporal period: smallest p such that row(t) = row(t\u2212p) for all late rows. Period 1 = static (fixed point). Period 2 = blinking. Higher periods = oscillating structures. "Aperiodic" = no repeat found within the grid, typical of chaotic (III) or complex (IV) rules.',
+            entropyRate: 'Entropy rate: h = lim H(L)/L as L\u2192\u221E, approximated as the average of H(L)\u2212H(L\u22121) for large block sizes (L=6,7,8). Measured in bits/cell. h\u22481.0 means each cell is maximally unpredictable; h\u22480 means highly structured. Separates randomness from structure when compared with excess entropy E.',
+            excessEntropy: 'Excess entropy: E = lim [H(L) \u2212 h\u00B7L] as L\u2192\u221E, the y-intercept of the linear fit to block entropy H(L) vs L. Measures total stored information / spatial correlations beyond pure randomness. E\u22480 for both uniform (Class I) and random (Class III) rules. E>0 for complex structured rules (Class IV) that have long-range correlations.',
+            blockEntropy: 'Block entropy H(L): Shannon entropy of all length-L binary patterns in a row, H(L) = -\u03A3 p(b) log\u2082 p(b), averaged over all time steps. Computed for L=1\u20138 using a sliding window with periodic wrapping. H(L) is non-decreasing: as block size grows, more pattern detail is captured. The slope at large L gives the entropy rate h; the y-intercept gives excess entropy E.'
         };
 
         // Global state
@@ -1670,6 +1673,7 @@
         function createColorScaleBar(container, config = {}) {
             const barWidth = config.barWidth || 20;
             const barHeight = config.barHeight || 200;
+            const displayHeight = config.displayHeight || null;
             const colorMin = config.colorMin || [0, 0, 0];
             const colorMid = config.colorMid || [0, 255, 255];
             const colorMax = config.colorMax || [255, 255, 255];
@@ -1710,6 +1714,10 @@
             canvas.width = barWidth;
             canvas.height = barHeight;
             canvas.style.border = '1px solid #666';
+            if (displayHeight) {
+                canvas.style.height = displayHeight + 'px';
+                canvas.style.width = barWidth + 'px';
+            }
 
             const ctx = canvas.getContext('2d');
 
@@ -1746,8 +1754,9 @@
             midLabel.style.color = '#aaa';
             midLabel.style.fontSize = '10px';
             midLabel.style.fontFamily = 'monospace';
-            midLabel.style.marginTop = `-${Math.round(barHeight / 2 + 8)}px`;
-            midLabel.style.marginBottom = `${Math.round(barHeight / 2 - 8)}px`;
+            const effectiveHeight = displayHeight || barHeight;
+            midLabel.style.marginTop = `-${Math.round(effectiveHeight / 2 + 8)}px`;
+            midLabel.style.marginBottom = `${Math.round(effectiveHeight / 2 - 8)}px`;
             midLabel.style.marginLeft = `${barWidth + 8}px`;
             midLabel.style.alignSelf = 'flex-start';
             midLabel.textContent = `— ${midValue.toFixed(2)}`;
@@ -2635,7 +2644,7 @@
 
             // Color scale bar
             createColorScaleBar(heatmapContainer, {
-                barWidth: 16, barHeight: 384,
+                barWidth: 16, barHeight: 100, displayHeight: 384,
                 colorMin: [0, 0, 0], colorMid: [0, 200, 200], colorMax: [0, 255, 150],
                 minValue: 0, maxValue: 1, label: 'Difference'
             });

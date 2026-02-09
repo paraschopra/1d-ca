@@ -30,10 +30,10 @@ async function runTests() {
         const keys = await page.evaluate(() => {
             return typeof metricTooltips === 'object' ? Object.keys(metricTooltips).sort() : [];
         });
-        const expected = ['compressibility', 'density', 'entropyRate', 'excessEntropy',
+        const expected = ['blockEntropy', 'compressibility', 'density', 'entropyRate', 'excessEntropy',
             'lyapunov', 'meanField', 'period', 'entropy', 'symmetry', 'wolframClass'].sort();
         const allPresent = expected.every(k => keys.includes(k));
-        console.log(`${allPresent ? 'PASS' : 'FAIL'}: metricTooltips has all 10 keys`);
+        console.log(`${allPresent ? 'PASS' : 'FAIL'}: metricTooltips has all 11 keys`);
         if (!allPresent) console.log(`  Expected: ${expected.join(', ')}\n  Got: ${keys.join(', ')}`);
         allPresent ? testsPassed++ : testsFailed++;
     } catch (e) { console.log(`FAIL: metricTooltips exists - ${e.message}`); testsFailed++; }
@@ -47,8 +47,8 @@ async function runTests() {
             }
             return lengths;
         });
-        const allNonEmpty = Object.values(result).every(len => len > 20 && len < 500);
-        console.log(`${allNonEmpty ? 'PASS' : 'FAIL'}: All tooltips are non-empty strings (20-500 chars)`);
+        const allNonEmpty = Object.values(result).every(len => len > 20 && len < 600);
+        console.log(`${allNonEmpty ? 'PASS' : 'FAIL'}: All tooltips are non-empty strings (20-600 chars)`);
         if (!allNonEmpty) {
             for (const [k, v] of Object.entries(result)) {
                 if (v <= 20 || v >= 500) console.log(`  ${k}: ${v} chars`);
